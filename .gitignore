@@ -1,10 +1,39 @@
-# Node.js dependencies
-node_modules
+# Node.js
+node_modules/
+npm-debug.log*
+package-lock.json
 
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# IDE or editor files
-.vscode
-.idea
+# Operating System Files
+.DS_Store
 
-# Environment variables file
+# TypeScript compiled files
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# AWS CDK specific
+cdk.out/
+cdk.context.json
+
+# Environment files
 .env
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+
+# Testing specific
+coverage/
+
+# Local development
+local/
+temp/
