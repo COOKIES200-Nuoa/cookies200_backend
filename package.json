@@ -11,7 +11,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@aws-cdk/core": "^1.204.0",
     "aws-cdk-lib": "^2.139.1",
     "aws-sdk": "^2.1602.0",
     "constructs": "^10.3.0",
