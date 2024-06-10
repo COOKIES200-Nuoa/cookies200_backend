@@ -1,13 +1,13 @@
 import { expect as expectCDK, haveResource } from '@aws-cdk/assert';
-import { MyStack } from '../src/lib/stack';
+import { QuickSightIntegrationStack } from '../src/lib/stack'; // Adjust the import path as necessary
 import * as cdk from 'aws-cdk-lib';
 
-describe('MyStack', () => {
+describe('QuickSightStack', () => {
   const app = new cdk.App();
-  const stack = new MyStack(app, 'TestStack');
+  const stack = new QuickSightIntegrationStack(app, 'TestQuickSightStack');
 
-  it('creates an S3 bucket', () => {
-    //example checking the creation of S3
-    expectCDK(stack).to(haveResource('AWS::S3::Bucket'));
+  // Example test: checks for a QuickSight dataset
+  it('creates a QuickSight dataset', () => {
+    expectCDK(stack).to(haveResource('AWS::QuickSight::DataSet'));
   });
 });
