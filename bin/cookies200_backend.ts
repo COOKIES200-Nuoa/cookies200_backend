@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib';
-import { MyStack } from '../src/lib/stack';
+import { QuickSightIntegrationStack } from '../src/lib/stack';
 
 const app = new cdk.App();
-new MyStack(app, 'MyStack', {
+new QuickSightIntegrationStack(app, 'MyStack', {
   //pass stack props. gonna set up later
 });
 
