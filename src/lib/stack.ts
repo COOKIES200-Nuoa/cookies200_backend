@@ -29,6 +29,9 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         requireLowercase: true,
         requireSymbols: true,
       },
+      signInAliases: {
+        email: true
+      },
     });
     // Output the user pool ID (useful for configuring other systems/for administrative purposes)
     new cdk.CfnOutput(this, "UserPoolId", {
