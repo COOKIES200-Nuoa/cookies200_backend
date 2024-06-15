@@ -34,17 +34,17 @@ exports.handler = async (event) => {
 
     // ========= Exchange for Credentials =========
         // Getting Credential Data
-        const credentialsData = await getCredentials(idToken);
-        if (credentialsData != undefined && credentialsData != null) {
-            console.log("Credential Data Obtained");
-        } else {
-            console.log("Credential Data Failed to Obtain");
-        }
-        const accessKey = credentialsData.Credentials.AccessKeyId;
-        const secretKey = credentialsData.Credentials.SecretKey;
-        const sessionToken = credentialsData.Credentials.SessionToken;
-        console.log("Temp Access Key Obtained");
-        console.log("Temp Secret Key Obtained");
+        // const credentialsData = await getCredentials(idToken);
+        // if (credentialsData != undefined && credentialsData != null) {
+        //     console.log("Credential Data Obtained");
+        // } else {
+        //     console.log("Credential Data Failed to Obtain");
+        // }
+        // const accessKey = credentialsData.Credentials.AccessKeyId;
+        // const secretKey = credentialsData.Credentials.SecretKey;
+        // const sessionToken = credentialsData.Credentials.SessionToken;
+        // console.log("Temp Access Key Obtained");
+        // console.log("Temp Secret Key Obtained");
 
     // ========= Get Cognito User's Email =========
         email = await getCognitoUserEmail(accessToken);
@@ -57,9 +57,8 @@ exports.handler = async (event) => {
         userRegistered = await registerQuickSightUser(
             tenant,
             email, 
-            accessKey, 
-            secretKey, 
-            sessionToken
+            idToken,
+            accessToken,
         );
         console.log("User registered: ", true);
         
