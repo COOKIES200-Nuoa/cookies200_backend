@@ -1,6 +1,6 @@
 const AWS = require('aws-sdk');
 const { authenticateUser } = require('./helpers/authenticateUser');
-const { getCredentials } = require('./helpers/getCredentials');
+// const { getCredentials } = require('./helpers/getCredentials');
 const { createQSDashboard } = require('./helpers/createDashboard');
 
 // async function onboarding() {
@@ -47,16 +47,15 @@ exports.handler = async (event) => {
         // console.log("Temp Secret Key Obtained");
 
     // ========= Get Cognito User's Email =========
-        email = await getCognitoUserEmail(accessToken);
-        console.log("Email: ", email);
+        // email = await getCognitoUserEmail(accessToken);
+        // console.log("Email: ", email);
 
     // ========= Create Dashboard and Invite User =========
         var createDashboardResponse = await createQSDashboard(tenant)
 
     // ========= Register Quicksight User =========
         userRegistered = await registerQuickSightUser(
-            tenant,
-            email, 
+            tenant, 
             idToken,
             accessToken,
         );

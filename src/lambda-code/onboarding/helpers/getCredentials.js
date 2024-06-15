@@ -1,13 +1,12 @@
-const { Identity } = require('aws-cdk-lib/aws-ses');
 const AWS = require('aws-sdk')
 const jwt = require('jsonwebtoken')
 
 const region = process.env.REGION;
-const identityPoolId = process.env.IDPOOL_ID;
-const userPoolId = process.env.USER_POOL_ID;
+// const identityPoolId = process.env.IDPOOL_ID;
+// const userPoolId = process.env.USER_POOL_ID;
 
-const cognitoIdentity = new AWS.CognitoIdentity({ region: region});
-const cognitoISP = new AWS.CognitoIdentityServiceProvider({ region: region })
+// const cognitoIdentity = new AWS.CognitoIdentity({ region: region});
+// const cognitoISP = new AWS.CognitoIdentityServiceProvider({ region: region })
 
 async function getCredentials(idToken) {
     // Step 1: Get user's assigned role from the ID token
@@ -35,29 +34,13 @@ async function getCredentials(idToken) {
             };
             const assumeRoleResult = await sts.assumeRole(assumedRoleParams).promise();
 
-            return assumeRoleResult.Credentials;
+            return {
+                roleArn,
+                credentials: assumeRoleResult.Credentials
+            };
         } else {
             console.log("Default authenticated role, no need to assume another role."); // Check user does not belongs to a tenant and is using the default authenticated role
-
-            const getIdParams = {
-                IdentityPoolId: process.env.IDPOOL_ID,
-                Logins: {
-                    [`cognito-idp.${process.env.REGION}.amazonaws.com/${process.env.USER_POOL_ID}`]: idToken,
-                },
-            };
-
-            const identityIdResult = await cognitoIdentity.getId(getIdParams).promise();
-            const identityId = identityIdResult.IdentityId;
-
-            const getCredentialsParams = {
-                IdentityId: identityId,
-                Logins: {
-                    [`cognito-idp.${process.env.REGION}.amazonaws.com/${process.env.USER_POOL_ID}`]: idToken,
-                },
-            };
-
-            const credentialsData = await cognitoIdentity.getCredentialsForIdentity(getCredentialsParams).promise();
-            return credentialsData;
+            throw new Error("User does not belong to any tenant. Access Denied!");
         }
     } catch (error) {
         console.error('Error assuming role:', error);
@@ -100,21 +83,21 @@ async function getCredentials(idToken) {
 
 };
 
-async function getCognitoUserEmail(accessToken) {
-    const getUserParams = {
-        AccessToken: accessToken
-    };
+// async function getCognitoUserEmail(accessToken) {
+//     const getUserParams = {
+//         AccessToken: accessToken
+//     };
 
-    // Get Cognito User's Email
-    try {
-        const userData = await cognitoISP.getUser(getUserParams).promise();
-            const emailData = userData.UserAttributes.find(Attr => Attr.Name === 'email');
-            const email = emailData.Value;
-            console.log("User's email: ", email);
-            return email;
-    } catch (error) {
-        console.log("Error getting Cognito User's Email: ", error.message);
-    }
-};
+//     // Get Cognito User's Email
+//     try {
+//         const userData = await cognitoISP.getUser(getUserParams).promise();
+//             const emailData = userData.UserAttributes.find(Attr => Attr.Name === 'email');
+//             const email = emailData.Value;
+//             console.log("User's email: ", email);
+//             return email;
+//     } catch (error) {
+//         console.log("Error getting Cognito User's Email: ", error.message);
+//     }
+// };
 
-module.exports = { getCredentials, getCognitoUserEmail};
+module.exports = { getCredentials };

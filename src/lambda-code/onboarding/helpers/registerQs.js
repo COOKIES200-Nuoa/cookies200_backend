@@ -6,25 +6,32 @@ const region = process.env.REGION;
 const identityType = process.env.ID_TYPE;
 const awsAccountId = process.env.AWS_ACC_ID;
 const userRole = process.env.USER_ROLE;
-const assumeRole = process.env.ASSUMED_ROLE_ARN;
 
-var roleCredentialsData;
+// var roleCredentialsData;
 
 // async function registerQuickSightUser(tenant , email, accessKey, secretKey, sessionToken) {
-async function registerQuickSightUser(tenant, email, idToken, accessToken) {
+async function registerQuickSightUser(tenant, idToken, accessToken) {
 
     try {
-    // Step 1: Get the temporary credentials using getCredentials
-    const credentialsData = await getCredentials(idToken, accessToken);
-    if (!credentialsData) {
-        throw new Error('Failed to obtain credentials.');
+    // Step 1: Get the temporary credentials and role ARN using getCredentials
+    const { roleArn, credentials } = await getCredentials(idToken, accessToken);
+    if (!credentials || !roleArn) {
+        if(!credentials){
+            throw new Error('Failed to obtain credentials.');
+        } else {
+            throw new Error('Failed to obtain assumed Role ARN');
+        }
+        
     }
+
+    console.log(`Tenant ${tenant}'s roleARN: ${roleArn}`);
+    console.log(`Tenant ${tenant}'s credentials: ${credentials}`);
 
     // Step 2: Create Quicksight instance using obtained credentials
     const quicksight = new AWS.QuickSight({
-        accessKeyId: credentialsData.Credentials.AccessKeyId,
-        secretAccessKey: credentialsData.Credentials.SecretAccessKey,
-        sessionToken: credentialsData.Credentials.SessionToken,
+        accessKeyId: credentials.Credentials.AccessKeyId,
+        secretAccessKey: credentials.Credentials.SecretAccessKey,
+        sessionToken: credentials.Credentials.SessionToken,
         region: region
     });
 
@@ -36,8 +43,7 @@ async function registerQuickSightUser(tenant, email, idToken, accessToken) {
         Namespace: tenant, 
         SessionName:tenant,
         UserRole: userRole,
-        Email: email,
-        IamArn: assumeRole,
+        IamArn: roleArn,
     };
     try {
         await registerUser(registerUserParams);
@@ -94,20 +100,6 @@ async function registerQuickSightUser(tenant, email, idToken, accessToken) {
 //         UserRole: userRole,
 //         Email: email,
 //         IamArn: assumeRole,
-//     };
-
-// // ========= Register User =========
-//     try {
-//         await registerUser(registerUserParams);
-//         console.log("User registered in QuickSight");
-//         return true;
-//     } catch (error) {
-//         if (error.code === 'ResourceExistsException') { // User already registered
-//             console.log("User already exists in QuickSight");
-//             return true;
-//         } else {
-//             console.error("Error registering user:", error.message);
-//         }
 //     };
 };
 

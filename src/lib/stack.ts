@@ -3,7 +3,6 @@ import { Construct } from "constructs";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as iam from "aws-cdk-lib/aws-iam";
-import { Key } from "aws-cdk-lib/aws-kms";
 
 export class QuickSightIntegrationStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -184,7 +183,6 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         AWS_ACC_ID: this.account,
         USER_ROLE: 'READER',
         QUICKSIGHT_ADMIN: 'Cookies200',
-        ASSUMED_ROLE_ARN: 'TBD',
         IDPOOL_ID: identityPoolId,
         USER_POOL_ID: userPool.userPoolId,
         USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
