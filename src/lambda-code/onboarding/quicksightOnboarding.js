@@ -11,7 +11,7 @@ const { createQSDashboard } = require('./helpers/createDashboard');
     // const dashboardName = "Lambda created Dashboard 3";
     // const templateId = "test-template";
 
-exports.handler = async (event) => {
+exports.quicksightOnboarding = async (event) => {
 
     var email = '';
     var userRegistered = false;

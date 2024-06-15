@@ -6,6 +6,7 @@ const region = process.env.REGION;
 const identityType = process.env.ID_TYPE;
 const awsAccountId = process.env.AWS_ACC_ID;
 const userRole = process.env.USER_ROLE;
+const email = process.env.EMAIL;
 
 // var roleCredentialsData;
 
@@ -42,6 +43,7 @@ async function registerQuickSightUser(tenant, idToken, accessToken) {
         AwsAccountId: awsAccountId,  
         Namespace: tenant, 
         SessionName:tenant,
+        Email: email,
         UserRole: userRole,
         IamArn: roleArn,
     };

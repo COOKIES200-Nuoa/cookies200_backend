@@ -173,7 +173,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
     // Lambda function for QuickSight account registration
     const qsLambda = new lambda.Function(this, "QuickSightLambda", {
       runtime: lambda.Runtime.NODEJS_20_X,
-      handler: "index.onboarding",
+      handler: "quicksightOnboarding",
       // so does Lambda return a Quicksight access token or create a new Quicksight account
       code: lambda.Code.fromAsset("src/lambda-code/onboarding"),
       role: lambdaRole, // Assign the role here
@@ -182,6 +182,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         ID_TYPE: 'IAM',
         AWS_ACC_ID: this.account,
         USER_ROLE: 'READER',
+        EMAIL:'s3938145@rmit.edu.vn',
         QUICKSIGHT_ADMIN: 'Cookies200',
         IDPOOL_ID: identityPoolId,
         USER_POOL_ID: userPool.userPoolId,
