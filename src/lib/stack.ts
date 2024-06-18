@@ -175,7 +175,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: "quicksightOnboarding",
       // so does Lambda return a Quicksight access token or create a new Quicksight account
-      code: lambda.Code.fromAsset("src/lambda-code/onboarding"),
+      code: lambda.Code.fromAsset("src/lambda-function/onboarding"),
       role: lambdaRole, // Assign the role here
       environment: {
         REGION: this.region,
