@@ -1,6 +1,5 @@
 const AWS = require('aws-sdk')
 const jwt = require('jsonwebtoken')
-
 const region = process.env.REGION;
 // const identityPoolId = process.env.IDPOOL_ID;
 // const userPoolId = process.env.USER_POOL_ID;

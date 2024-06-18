@@ -1,5 +1,5 @@
 const AWS = require('aws-sdk')
-const { createQuickSightResource } = require('./createQsResources');
+const { createQuickSightResource } = require('./createQuickSightResource');
 
 const region = process.env.REGION;
 const awsAccountId = process.env.AWS_ACC_ID;

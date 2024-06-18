@@ -1,7 +1,8 @@
 const AWS = require('aws-sdk');
 const { authenticateUser } = require('./helpers/authenticateUser');
 // const { getCredentials } = require('./helpers/getCredentials');
-const { createQSDashboard } = require('./helpers/createDashboard');
+const { createDashboard } = require('./helpers/createDashboard');
+const { registerQuickSightUser } = require('./helpers/registerQuickSightUser');
 
 // async function onboarding() {
     // const userName = "test-user-2";
@@ -51,7 +52,7 @@ exports.quicksightOnboarding = async (event) => {
         // console.log("Email: ", email);
 
     // ========= Create Dashboard and Invite User =========
-        var createDashboardResponse = await createQSDashboard(tenant)
+        var createDashboardResponse = await createDashboard(tenant)
 
     // ========= Register Quicksight User =========
         userRegistered = await registerQuickSightUser(
