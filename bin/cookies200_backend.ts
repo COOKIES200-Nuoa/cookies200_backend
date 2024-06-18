@@ -1,10 +1,14 @@
 #!/usr/bin/env node
+import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { QuickSightIntegrationStack } from '../src/lib/stack';
+import { QuickSightIntegrationStack } from '../src/lib/stack.ts'; 
 
 const app = new cdk.App();
-new QuickSightIntegrationStack(app, 'MyStack', {
-  //pass stack props. gonna set up later
+new QuickSightIntegrationStack(app, 'QuickSightIntegrationStack', {
+  env: { 
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: process.env.CDK_DEFAULT_REGION,
+  }
 });
 
-app.synth(); 
+app.synth();
