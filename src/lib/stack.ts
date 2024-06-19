@@ -27,6 +27,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         requireSymbols: true,
       },
       signInAliases: {
+        username: true,
         email: true,
       },
     });
@@ -43,9 +44,6 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         userPassword: true,
       },
     });
-
-    // ========= Defining Tenant Groups =========
-    const tenantGroups = ['TenantA', 'TenantB'];
 
     // ========= Creating Cognito Identity Pool ========= 
     // Create Identity Pool FIRST
@@ -68,7 +66,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
     });
 
     // Create Roles for authenticated users
-    const authenticatedRole = new iam.Role(this, 'AuthenticatedRole', {
+    const nuoaAuthRole = new iam.Role(this, 'NuoaAuthRole', {
       assumedBy: new iam.WebIdentityPrincipal(
         'cognito-identity.amazonaws.com',
         {
@@ -80,15 +78,27 @@ export class QuickSightIntegrationStack extends cdk.Stack {
           },
         }
       ),
+      description: 'Default role for authenticated users',
     });
-
-    authenticatedRole.addToPolicy(
+    // Add policies for cognito operations
+    nuoaAuthRole.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: ['mobileanalytics:PutEvents', 'cognito-sync:*', 'cognito-identity:*'],
         resources: ['*'],
       })
     );
+    // Add policies for assume tenant role
+    nuoaAuthRole.addToPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ['sts:AssumeRole'],
+        resources: [`arn:aws:iam::${this.account}:role/*TenantRole*`],
+      })
+    );
+
+    // ========= Defining Tenant Groups =========
+    const tenantGroups = ['TenantA', 'TenantB'];
 
     const roleMappings: { [key: string]: string } = {}; 
     tenantGroups.forEach((tenantName) => {
@@ -98,8 +108,13 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       });
 
       // Create tenant-specific IAM role
-      const tenantRole = new iam.Role(this, `${tenantName}Role`, {
-        assumedBy: new iam.ArnPrincipal(authenticatedRole.roleArn), // Assume authenticated role
+      const tenantRole = new iam.Role(this, `${tenantName}TenantRole`, {
+        assumedBy: new iam.PrincipalWithConditions(new iam.ArnPrincipal(nuoaAuthRole.roleArn), {
+          "StringEquals": {
+            "sts:ExternalId": `${tenantName}`,
+          },
+        }),
+        description: `Role for ${tenantName}`,
       });
 
       // Add permissions to tenant-specific role
@@ -122,20 +137,25 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         `cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}:${group.ref}`
       ] = tenantRole.roleArn;
     });
+
+    const roleMappingsJson = new cdk.CfnJson(this, 'RoleMappingsJson', {
+      value: roleMappings,
+    });
     
-    // Add role mappings to the Identity Pool
-    identityPool.addPropertyOverride('RoleMappings', roleMappings);
+    // // Add role mappings to the Identity Pool
+    // identityPool.addPropertyOverride('RoleMappings', roleMappings);
 
     // Attach the Identity Pool to the User Pool
     new cognito.CfnIdentityPoolRoleAttachment(this, 'IdentityPoolRoleAttachment', {
       identityPoolId: identityPool.ref,
       roles: {
-        authenticated: authenticatedRole.roleArn,
+        authenticated: nuoaAuthRole.roleArn,
       },
+      roleMappings: roleMappingsJson,
     });
 
     // ========= Creating lambda function =========
-    const lambdaRole = new iam.Role(this, 'LambdaExecutionRole', {
+    const lambdaRole = new iam.Role(this, 'NuoaLambdaExecutionRole', {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
     });
 
@@ -146,7 +166,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       })
     );
 
-    const identityPoolId = cdk.Fn.getAtt(identityPool.logicalId, 'IdentityPoolId').toString();
+    const identityPoolId = cdk.Fn.getAtt(identityPool.ref, 'IdentityPoolId').toString();
 
     new lambda.Function(this, 'QuickSightLambda', {
       runtime: lambda.Runtime.NODEJS_20_X,
@@ -160,7 +180,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         USER_ROLE: 'READER',
         EMAIL: 's3938145@rmit.edu.vn',
         QUICKSIGHT_ADMIN: 'Cookies200', 
-        IDPOOL_ID: identityPoolId,
+        IDPOOL_ID: identityPool.ref,
         USER_POOL_ID: userPool.userPoolId,
         USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
       },
