@@ -98,7 +98,8 @@ export class QuickSightIntegrationStack extends cdk.Stack {
     );
 
     // ========= Defining Tenant Groups =========
-    const tenantGroups = ['TenantA', 'TenantB'];
+
+    const tenantGroups = ['TenantA', 'TenantB']; // Replace with trigger with user input later 
 
     const roleMappings: { [key: string]: any } = {};
 
@@ -139,7 +140,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
 
     // Configure the rule-based mapping
     roleMappings[
-      `cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}:${userPoolClient.userPoolClientId}`
+      `cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}:${userPoolClient.userPoolClientId}` // Identity provider
       ] = {
           Type: 'Rules',
           AmbiguousRoleResolution: 'Deny', // Or choose another resolution strategy
@@ -154,19 +155,19 @@ export class QuickSightIntegrationStack extends cdk.Stack {
               ],
           },
       };
-    });
 
-    const roleMappingsJson = new cdk.CfnJson(this, `RoleMappingsJson`, {
-      value: roleMappings,
-    });
-
-    // Attach the Identity Pool to the User Pool
-    const identityPoolRoleAttachment = new cognito.CfnIdentityPoolRoleAttachment(this, `IdentityPoolRoleAttachment`, {
-      identityPoolId: identityPool.ref,
-      roles: {
-        authenticated: nuoaAuthRole.roleArn,
-      },
-      roleMappings: roleMappingsJson,
+      const roleMappingsJson = new cdk.CfnJson(this, `RoleMappingsJson`, {
+        value: roleMappings,
+      });
+  
+      // Attach the Identity Pool to the User Pool
+      const identityPoolRoleAttachment = new cognito.CfnIdentityPoolRoleAttachment(this, `IdentityPoolRoleAttachment`, {
+        identityPoolId: identityPool.ref,
+        roles: {
+          authenticated: nuoaAuthRole.roleArn,
+        },
+        roleMappings: roleMappingsJson,
+      });
     });
 
     // ========= Creating lambda function =========
