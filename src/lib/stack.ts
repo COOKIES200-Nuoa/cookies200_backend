@@ -102,11 +102,15 @@ export class QuickSightIntegrationStack extends cdk.Stack {
 
     const roleMappings: { [key: string]: any } = {};
 
+    const groupReferences: cognito.CfnUserPoolGroup[] = [];
+
     tenantGroups.forEach((tenantName) => {
-      const group = new cognito.CfnUserPoolGroup(this, `${tenantName}Group`, {
+      const group = new cognito.CfnUserPoolGroup(this, `${tenantName}`, {
         userPoolId: userPool.userPoolId,
         groupName: tenantName,
       });
+
+      groupReferences.push(group);
 
       // Create tenant-specific IAM role
       const tenantRole = new iam.Role(this, `${tenantName}TenantRole`, {
@@ -133,21 +137,31 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         })
       );
 
-    // Assign the role ARN within a structured object
-      roleMappings[
-        `cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}:${group.ref}`
+    // Configure the rule-based mapping
+    roleMappings[
+      `cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}:${userPoolClient.userPoolClientId}`
       ] = {
-        Type: 'Token',
-        AmbiguousRoleResolution: 'Deny',
+          Type: 'Rules',
+          AmbiguousRoleResolution: 'Deny', // Or choose another resolution strategy
+          RulesConfiguration: {
+              Rules: [
+                  {
+                      Claim: 'cognito:groups',
+                      MatchType: 'Equals',
+                      Value: `${tenantName}`, // Use the group name as the value
+                      RoleARN: tenantRole.roleArn, // Assign the role ARN
+                  },
+              ],
+          },
       };
     });
 
-    const roleMappingsJson = new cdk.CfnJson(this, 'RoleMappingsJson', {
+    const roleMappingsJson = new cdk.CfnJson(this, `RoleMappingsJson`, {
       value: roleMappings,
     });
 
     // Attach the Identity Pool to the User Pool
-    new cognito.CfnIdentityPoolRoleAttachment(this, 'IdentityPoolRoleAttachment', {
+    const identityPoolRoleAttachment = new cognito.CfnIdentityPoolRoleAttachment(this, `IdentityPoolRoleAttachment`, {
       identityPoolId: identityPool.ref,
       roles: {
         authenticated: nuoaAuthRole.roleArn,
