@@ -100,7 +100,8 @@ export class QuickSightIntegrationStack extends cdk.Stack {
     // ========= Defining Tenant Groups =========
     const tenantGroups = ['TenantA', 'TenantB'];
 
-    const roleMappings: { [key: string]: string } = {}; 
+    const roleMappings: { [key: string]: any } = {};
+
     tenantGroups.forEach((tenantName) => {
       const group = new cognito.CfnUserPoolGroup(this, `${tenantName}Group`, {
         userPoolId: userPool.userPoolId,
@@ -132,18 +133,18 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         })
       );
 
-      // Add Role Mapping to Identity Pool 
+    // Assign the role ARN within a structured object
       roleMappings[
         `cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}:${group.ref}`
-      ] = tenantRole.roleArn;
+      ] = {
+        Type: 'Token',
+        AmbiguousRoleResolution: 'Deny',
+      };
     });
 
     const roleMappingsJson = new cdk.CfnJson(this, 'RoleMappingsJson', {
       value: roleMappings,
     });
-    
-    // // Add role mappings to the Identity Pool
-    // identityPool.addPropertyOverride('RoleMappings', roleMappings);
 
     // Attach the Identity Pool to the User Pool
     new cognito.CfnIdentityPoolRoleAttachment(this, 'IdentityPoolRoleAttachment', {
