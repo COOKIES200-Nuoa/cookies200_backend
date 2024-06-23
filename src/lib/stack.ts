@@ -98,8 +98,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
     );
 
     // ========= Defining Tenant Groups =========
-
-    const tenantGroups = ['TenantA', 'TenantB']; // Replace with trigger with user input later 
+    const tenantGroups = ['TenantA', 'TenantB']; //Replace with trigger
 
     const roleMappings: { [key: string]: any } = {};
 
@@ -155,19 +154,19 @@ export class QuickSightIntegrationStack extends cdk.Stack {
               ],
           },
       };
+    });
 
-      const roleMappingsJson = new cdk.CfnJson(this, `RoleMappingsJson`, {
-        value: roleMappings,
-      });
-  
-      // Attach the Identity Pool to the User Pool
-      const identityPoolRoleAttachment = new cognito.CfnIdentityPoolRoleAttachment(this, `IdentityPoolRoleAttachment`, {
-        identityPoolId: identityPool.ref,
-        roles: {
-          authenticated: nuoaAuthRole.roleArn,
-        },
-        roleMappings: roleMappingsJson,
-      });
+    const roleMappingsJson = new cdk.CfnJson(this, `RoleMappingsJson`, {
+      value: roleMappings,
+    });
+
+    // Attach the Identity Pool to the User Pool
+    const identityPoolRoleAttachment = new cognito.CfnIdentityPoolRoleAttachment(this, `IdentityPoolRoleAttachment`, {
+      identityPoolId: identityPool.ref,
+      roles: {
+        authenticated: nuoaAuthRole.roleArn,
+      },
+      roleMappings: roleMappingsJson,
     });
 
     // ========= Creating lambda function =========
