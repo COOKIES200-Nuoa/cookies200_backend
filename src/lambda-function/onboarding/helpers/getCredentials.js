@@ -8,7 +8,7 @@ const region = process.env.REGION;
 // const cognitoISP = new AWS.CognitoIdentityServiceProvider({ region: region })
 
 async function getCredentials(idToken) {
-    // Step 1: Get user's assigned role from the ID token
+    // Get user's assigned role from the ID token
     let roleArn = null;
     try {
         const decodedToken = jwt.decode(idToken);
@@ -23,7 +23,7 @@ async function getCredentials(idToken) {
         throw error;
     }
 
-    // Step 2: Assume assigned role
+    // Assume assigned role
     try {
         if (!roleArn.endsWith("authenticated")) { // Check user belongs to a tenant and is assigned a tenant role
             const sts = new AWS.STS();

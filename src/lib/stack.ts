@@ -45,19 +45,23 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       },
     });
 
-    // ========= Creating Cognito Identity Pool ========= 
+    // ========= Creating Cognito Identity Pool =========
     // Create Identity Pool FIRST
-    const identityPool = new cognito.CfnIdentityPool(this, 'TenantIdentityPool', {
-      identityPoolName: 'TenantIdentityPool',
-      allowUnauthenticatedIdentities: false,
-      cognitoIdentityProviders: [
-        {
-          clientId: userPoolClient.userPoolClientId,
-          providerName: userPool.userPoolProviderName,
-          serverSideTokenCheck: true,
-        },
-      ],
-    });
+    const identityPool = new cognito.CfnIdentityPool(
+      this,
+      'TenantIdentityPool',
+      {
+        identityPoolName: 'TenantIdentityPool',
+        allowUnauthenticatedIdentities: false,
+        cognitoIdentityProviders: [
+          {
+            clientId: userPoolClient.userPoolClientId,
+            providerName: userPool.userPoolProviderName,
+            serverSideTokenCheck: true,
+          },
+        ],
+      }
+    );
 
     // Output the Identity Pool ID
     new cdk.CfnOutput(this, 'IdentityPoolId', {
@@ -84,7 +88,11 @@ export class QuickSightIntegrationStack extends cdk.Stack {
     nuoaAuthRole.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
-        actions: ['mobileanalytics:PutEvents', 'cognito-sync:*', 'cognito-identity:*'],
+        actions: [
+          'mobileanalytics:PutEvents',
+          'cognito-sync:*',
+          'cognito-identity:*',
+        ],
         resources: ['*'],
       })
     );
@@ -173,16 +181,23 @@ export class QuickSightIntegrationStack extends cdk.Stack {
 
     lambdaRole.addToPolicy(
       new iam.PolicyStatement({
-        actions: ['quicksight:*', 'cognito-idp:AdminCreateUser', 'cognito-idp:AdminAddUserToGroup'],
-        resources: ['*'], 
+        actions: [
+          'quicksight:*',
+          'cognito-idp:AdminCreateUser',
+          'cognito-idp:AdminAddUserToGroup',
+        ],
+        resources: ['*'],
       })
     );
 
-    const identityPoolId = cdk.Fn.getAtt(identityPool.ref, 'IdentityPoolId').toString();
+    const identityPoolId = cdk.Fn.getAtt(
+      identityPool.ref,
+      'IdentityPoolId'
+    ).toString();
 
     new lambda.Function(this, 'QuickSightLambda', {
       runtime: lambda.Runtime.NODEJS_20_X,
-      handler: 'quicksightOnboarding', 
+      handler: 'quicksightOnboarding',
       code: lambda.Code.fromAsset('src/lambda-function/onboarding'),
       role: lambdaRole,
       environment: {
@@ -191,7 +206,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         AWS_ACC_ID: this.account,
         USER_ROLE: 'READER',
         EMAIL: 's3938145@rmit.edu.vn',
-        QUICKSIGHT_ADMIN: 'Cookies200', 
+        QUICKSIGHT_ADMIN: 'Cookies200',
         IDPOOL_ID: identityPool.ref,
         USER_POOL_ID: userPool.userPoolId,
         USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,

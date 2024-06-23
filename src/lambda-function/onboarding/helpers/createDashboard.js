@@ -4,8 +4,6 @@ const { createQuickSightResource } = require('./createQuickSightResource');
 const region = process.env.REGION;
 const awsAccountId = process.env.AWS_ACC_ID;
 const adminId = process.env.QUICKSIGHT_ADMIN;
-const adminId2 = process.env.QUICKSIGHT_ADMIN_2;
-const namespace = process.env.NAMESPACE;
 
 const quicksight = new AWS.QuickSight({ region: region });
 
@@ -36,7 +34,7 @@ async function createQSDashboard(tenant) {
         "Version": "1.0",
         "Parameters": {
             "DataSource": {
-                "Type": "RELATIONAL" // Placeholder data source type (can be adjusted based on your needs)
+                "Type": "RELATIONAL" // Placeholder data source type 
             }
         },
         "Sheets": [
@@ -47,7 +45,7 @@ async function createQSDashboard(tenant) {
                     "Columns": 1
                 },
                 "Embeds": [{
-                    "Type": "EMPTY" // Placeholder for your visualization
+                    "Type": "EMPTY" // Placeholder for visualization
                 }]
             }
         ]
@@ -156,7 +154,6 @@ async function createQSDashboard(tenant) {
     } catch (error) {
         console.log('Error creating Quicksight Resource: ', error);
     }
-
 };
 
 module.exports = { createQSDashboard };
