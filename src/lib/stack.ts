@@ -45,19 +45,23 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       },
     });
 
-    // ========= Creating Cognito Identity Pool ========= 
+    // ========= Creating Cognito Identity Pool =========
     // Create Identity Pool FIRST
-    const identityPool = new cognito.CfnIdentityPool(this, 'TenantIdentityPool', {
-      identityPoolName: 'TenantIdentityPool',
-      allowUnauthenticatedIdentities: false,
-      cognitoIdentityProviders: [
-        {
-          clientId: userPoolClient.userPoolClientId,
-          providerName: userPool.userPoolProviderName,
-          serverSideTokenCheck: true,
-        },
-      ],
-    });
+    const identityPool = new cognito.CfnIdentityPool(
+      this,
+      'TenantIdentityPool',
+      {
+        identityPoolName: 'TenantIdentityPool',
+        allowUnauthenticatedIdentities: false,
+        cognitoIdentityProviders: [
+          {
+            clientId: userPoolClient.userPoolClientId,
+            providerName: userPool.userPoolProviderName,
+            serverSideTokenCheck: true,
+          },
+        ],
+      }
+    );
 
     // Output the Identity Pool ID
     new cdk.CfnOutput(this, 'IdentityPoolId', {
@@ -84,7 +88,11 @@ export class QuickSightIntegrationStack extends cdk.Stack {
     nuoaAuthRole.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
-        actions: ['mobileanalytics:PutEvents', 'cognito-sync:*', 'cognito-identity:*'],
+        actions: [
+          'mobileanalytics:PutEvents',
+          'cognito-sync:*',
+          'cognito-identity:*',
+        ],
         resources: ['*'],
       })
     );
@@ -98,27 +106,36 @@ export class QuickSightIntegrationStack extends cdk.Stack {
     );
 
     // ========= Defining Tenant Groups =========
-    const tenantGroups = ['TenantA', 'TenantB']; //Replace with trigger
 
-    const roleMappings: { [key: string]: any } = {};
-
-    const groupReferences: cognito.CfnUserPoolGroup[] = [];
-
+    const tenantGroups = ['TenantA', 'TenantB']; // Replace with trigger with user input later
+    // Initialize roleMappings outside the loop
+    const roleMappings: { [key: string]: any } = {
+      [`cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}:${userPoolClient.userPoolClientId}`]:
+        {
+          // Identity provider
+          Type: 'Rules',
+          AmbiguousRoleResolution: 'Deny',
+          RulesConfiguration: {
+            Rules: [], // Start with an empty rules array
+          },
+        },
+    };
     tenantGroups.forEach((tenantName) => {
       const group = new cognito.CfnUserPoolGroup(this, `${tenantName}`, {
         userPoolId: userPool.userPoolId,
         groupName: tenantName,
       });
 
-      groupReferences.push(group);
-
       // Create tenant-specific IAM role
       const tenantRole = new iam.Role(this, `${tenantName}TenantRole`, {
-        assumedBy: new iam.PrincipalWithConditions(new iam.ArnPrincipal(nuoaAuthRole.roleArn), {
-          "StringEquals": {
-            "sts:ExternalId": `${tenantName}`,
-          },
-        }),
+        assumedBy: new iam.PrincipalWithConditions(
+          new iam.ArnPrincipal(nuoaAuthRole.roleArn),
+          {
+            StringEquals: {
+              'sts:ExternalId': `${tenantName}`,
+            },
+          }
+        ),
         description: `Role for ${tenantName}`,
       });
 
@@ -132,43 +149,41 @@ export class QuickSightIntegrationStack extends cdk.Stack {
             'quicksight:GetDashboardEmbedUrl',
             'quicksight:GenerateEmbedUrlForRegisteredUser',
             'quicksight:RegisterUser',
-          ], 
-          resources: [`arn:aws:quicksight:${this.region}:${this.account}:namespace/${tenantName}`], 
+          ],
+          resources: [
+            `arn:aws:quicksight:${this.region}:${this.account}:namespace/${tenantName}`,
+          ],
         })
       );
 
-    // Configure the rule-based mapping
-    roleMappings[
-      `cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}:${userPoolClient.userPoolClientId}` // Identity provider
-      ] = {
-          Type: 'Rules',
-          AmbiguousRoleResolution: 'Deny', // Or choose another resolution strategy
-          RulesConfiguration: {
-              Rules: [
-                  {
-                      Claim: 'cognito:groups',
-                      MatchType: 'Equals',
-                      Value: `${tenantName}`, // Use the group name as the value
-                      RoleARN: tenantRole.roleArn, // Assign the role ARN
-                  },
-              ],
-          },
-      };
+      // Configure the rule-based mapping
+      roleMappings[
+        `cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}:${userPoolClient.userPoolClientId}`
+      ].RulesConfiguration.Rules.push({
+        Claim: 'cognito:groups',
+        MatchType: 'Equals',
+        Value: `${tenantName}`,
+        RoleARN: tenantRole.roleArn,
+      });
     });
-
+    
     const roleMappingsJson = new cdk.CfnJson(this, `RoleMappingsJson`, {
       value: roleMappings,
     });
 
     // Attach the Identity Pool to the User Pool
-    const identityPoolRoleAttachment = new cognito.CfnIdentityPoolRoleAttachment(this, `IdentityPoolRoleAttachment`, {
-      identityPoolId: identityPool.ref,
-      roles: {
-        authenticated: nuoaAuthRole.roleArn,
-      },
-      roleMappings: roleMappingsJson,
-    });
-
+    const identityPoolRoleAttachment =
+      new cognito.CfnIdentityPoolRoleAttachment(
+        this,
+        `IdentityPoolRoleAttachment`,
+        {
+          identityPoolId: identityPool.ref,
+          roles: {
+            authenticated: nuoaAuthRole.roleArn,
+          },
+          roleMappings: roleMappingsJson,
+        }
+      );
     // ========= Creating lambda function =========
     const lambdaRole = new iam.Role(this, 'NuoaLambdaExecutionRole', {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
@@ -176,16 +191,23 @@ export class QuickSightIntegrationStack extends cdk.Stack {
 
     lambdaRole.addToPolicy(
       new iam.PolicyStatement({
-        actions: ['quicksight:*', 'cognito-idp:AdminCreateUser', 'cognito-idp:AdminAddUserToGroup'],
-        resources: ['*'], 
+        actions: [
+          'quicksight:*',
+          'cognito-idp:AdminCreateUser',
+          'cognito-idp:AdminAddUserToGroup',
+        ],
+        resources: ['*'],
       })
     );
 
-    const identityPoolId = cdk.Fn.getAtt(identityPool.ref, 'IdentityPoolId').toString();
+    const identityPoolId = cdk.Fn.getAtt(
+      identityPool.ref,
+      'IdentityPoolId'
+    ).toString();
 
     new lambda.Function(this, 'QuickSightLambda', {
       runtime: lambda.Runtime.NODEJS_20_X,
-      handler: 'quicksightOnboarding', 
+      handler: 'quicksightOnboarding',
       code: lambda.Code.fromAsset('src/lambda-function/onboarding'),
       role: lambdaRole,
       environment: {
@@ -194,7 +216,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         AWS_ACC_ID: this.account,
         USER_ROLE: 'READER',
         EMAIL: 's3938145@rmit.edu.vn',
-        QUICKSIGHT_ADMIN: 'Cookies200', 
+        QUICKSIGHT_ADMIN: 'Cookies200',
         IDPOOL_ID: identityPool.ref,
         USER_POOL_ID: userPool.userPoolId,
         USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
