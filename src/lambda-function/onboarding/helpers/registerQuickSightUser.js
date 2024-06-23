@@ -1,33 +1,31 @@
 const AWS = require('aws-sdk')
 const { createQuickSightResource } = require('./createQuickSightResource');
 const { getCredentials } = require('./getCredentials');
+
 const region = process.env.REGION;
 const identityType = process.env.ID_TYPE;
 const awsAccountId = process.env.AWS_ACC_ID;
 const userRole = process.env.USER_ROLE;
 const email = process.env.EMAIL;
 
-// var roleCredentialsData;
 
-// async function registerQuickSightUser(tenant , email, accessKey, secretKey, sessionToken) {
 async function registerQuickSightUser(tenant, idToken, accessToken) {
 
     try {
-    // Step 1: Get the temporary credentials and role ARN using getCredentials
+    // Get the temporary credentials and role ARN using getCredentials
     const { roleArn, credentials } = await getCredentials(idToken, accessToken);
     if (!credentials || !roleArn) {
         if(!credentials){
             throw new Error('Failed to obtain credentials.');
         } else {
             throw new Error('Failed to obtain assumed Role ARN');
-        }
-        
+        }    
     }
 
     console.log(`Tenant ${tenant}'s roleARN: ${roleArn}`);
     console.log(`Tenant ${tenant}'s credentials: ${credentials}`);
 
-    // Step 2: Create Quicksight instance using obtained credentials
+    // Create Quicksight instance using obtained credentials
     const quicksight = new AWS.QuickSight({
         accessKeyId: credentials.Credentials.AccessKeyId,
         secretAccessKey: credentials.Credentials.SecretAccessKey,
@@ -35,7 +33,7 @@ async function registerQuickSightUser(tenant, idToken, accessToken) {
         region: region
     });
 
-    // Step 3: Quicksight registration
+    // Quicksight registration
     const registerUser = createQuickSightResource('User', quicksight.registerUser);
     const registerUserParams = {
         IdentityType: identityType,
@@ -46,6 +44,7 @@ async function registerQuickSightUser(tenant, idToken, accessToken) {
         UserRole: userRole,
         IamArn: roleArn,
     };
+    
     try {
         await registerUser(registerUserParams);
         console.log("User registered in QuickSight");
