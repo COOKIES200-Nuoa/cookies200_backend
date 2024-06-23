@@ -97,78 +97,74 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       })
     );
 
-    // ========= Defining Tenant Groups =========
+    // // ========= Defining Tenant Groups =========
 
-    const tenantGroups = ['TenantA', 'TenantB']; // Replace with trigger with user input later 
+    // const tenantGroups = ['TenantA', 'TenantB']; // Replace with trigger with user input later 
 
-    const roleMappings: { [key: string]: any } = {};
+    // const roleMappings: { [key: string]: any } = {};
 
-    const groupReferences: cognito.CfnUserPoolGroup[] = [];
+    // tenantGroups.forEach((tenantName) => {
+    //   const group = new cognito.CfnUserPoolGroup(this, `${tenantName}`, {
+    //     userPoolId: userPool.userPoolId,
+    //     groupName: tenantName,
+    //   });
 
-    tenantGroups.forEach((tenantName) => {
-      const group = new cognito.CfnUserPoolGroup(this, `${tenantName}`, {
-        userPoolId: userPool.userPoolId,
-        groupName: tenantName,
-      });
+    //   // Create tenant-specific IAM role
+    //   const tenantRole = new iam.Role(this, `${tenantName}TenantRole`, {
+    //     assumedBy: new iam.PrincipalWithConditions(new iam.ArnPrincipal(nuoaAuthRole.roleArn), {
+    //       "StringEquals": {
+    //         "sts:ExternalId": `${tenantName}`,
+    //       },
+    //     }),
+    //     description: `Role for ${tenantName}`,
+    //   });
 
-      groupReferences.push(group);
+    //   // Add permissions to tenant-specific role
+    //   tenantRole.addToPolicy(
+    //     new iam.PolicyStatement({
+    //       effect: iam.Effect.ALLOW,
+    //       actions: [
+    //         'quicksight:DescribeDashboard',
+    //         'quicksight:ListDashboards',
+    //         'quicksight:GetDashboardEmbedUrl',
+    //         'quicksight:GenerateEmbedUrlForRegisteredUser',
+    //         'quicksight:RegisterUser',
+    //       ], 
+    //       resources: [`arn:aws:quicksight:${this.region}:${this.account}:namespace/${tenantName}`], 
+    //     })
+    //   );
 
-      // Create tenant-specific IAM role
-      const tenantRole = new iam.Role(this, `${tenantName}TenantRole`, {
-        assumedBy: new iam.PrincipalWithConditions(new iam.ArnPrincipal(nuoaAuthRole.roleArn), {
-          "StringEquals": {
-            "sts:ExternalId": `${tenantName}`,
-          },
-        }),
-        description: `Role for ${tenantName}`,
-      });
+    // // Configure the rule-based mapping
+    // roleMappings[
+    //   `cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}:${userPoolClient.userPoolClientId}` // Identity provider
+    //   ] = {
+    //       Type: 'Rules',
+    //       AmbiguousRoleResolution: 'Deny', // Or choose another resolution strategy
+    //       RulesConfiguration: {
+    //           Rules: [
+    //               {
+    //                   Claim: 'cognito:groups',
+    //                   MatchType: 'Equals',
+    //                   Value: `${tenantName}`, // Use the group name as the value
+    //                   RoleARN: tenantRole.roleArn, // Assign the role ARN
+    //               },
+    //           ],
+    //       },
+    //   };
+    // });
 
-      // Add permissions to tenant-specific role
-      tenantRole.addToPolicy(
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          actions: [
-            'quicksight:DescribeDashboard',
-            'quicksight:ListDashboards',
-            'quicksight:GetDashboardEmbedUrl',
-            'quicksight:GenerateEmbedUrlForRegisteredUser',
-            'quicksight:RegisterUser',
-          ], 
-          resources: [`arn:aws:quicksight:${this.region}:${this.account}:namespace/${tenantName}`], 
-        })
-      );
+    // const roleMappingsJson = new cdk.CfnJson(this, `RoleMappingsJson`, {
+    //   value: roleMappings,
+    // });
 
-    // Configure the rule-based mapping
-    roleMappings[
-      `cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}:${userPoolClient.userPoolClientId}` // Identity provider
-      ] = {
-          Type: 'Rules',
-          AmbiguousRoleResolution: 'Deny', // Or choose another resolution strategy
-          RulesConfiguration: {
-              Rules: [
-                  {
-                      Claim: 'cognito:groups',
-                      MatchType: 'Equals',
-                      Value: `${tenantName}`, // Use the group name as the value
-                      RoleARN: tenantRole.roleArn, // Assign the role ARN
-                  },
-              ],
-          },
-      };
-
-      const roleMappingsJson = new cdk.CfnJson(this, `RoleMappingsJson`, {
-        value: roleMappings,
-      });
-  
-      // Attach the Identity Pool to the User Pool
-      const identityPoolRoleAttachment = new cognito.CfnIdentityPoolRoleAttachment(this, `IdentityPoolRoleAttachment`, {
-        identityPoolId: identityPool.ref,
-        roles: {
-          authenticated: nuoaAuthRole.roleArn,
-        },
-        roleMappings: roleMappingsJson,
-      });
-    });
+    // // Attach the Identity Pool to the User Pool
+    // new cognito.CfnIdentityPoolRoleAttachment(this, `IdentityPoolRoleAttachment`, {
+    //   identityPoolId: identityPool.ref,
+    //   roles: {
+    //     authenticated: nuoaAuthRole.roleArn,
+    //   },
+    //   roleMappings: roleMappingsJson,
+    // });
 
     // ========= Creating lambda function =========
     const lambdaRole = new iam.Role(this, 'NuoaLambdaExecutionRole', {
@@ -201,5 +197,11 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
       },
     });
+
+    // Export values
+    new cdk.CfnOutput(this, 'UserPoolIdOutput', { value: userPool.userPoolId, exportName: 'UserPoolIdOutput'});
+    new cdk.CfnOutput(this, 'UserPoolClientIdOutput', { value: userPoolClient.userPoolClientId, exportName: 'UserPoolClientIdOutput'});
+    new cdk.CfnOutput(this, 'IdentityPoolIdOutput', { value: identityPool.ref , exportName: 'IdentityPoolIdOutput'});
+    new cdk.CfnOutput(this, 'NuoaAuthRoleArnOutput', { value: nuoaAuthRole.roleArn , exportName: 'NuoaAuthRoleArnOutput'});
   }
 }

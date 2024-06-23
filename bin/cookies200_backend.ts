@@ -2,6 +2,7 @@
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { QuickSightIntegrationStack } from '../src/lib/stack'; 
+import { TenantStack } from '../src/lib/tenant_stack';
 
 const app = new cdk.App();
 new QuickSightIntegrationStack(app, 'QuickSightIntegrationStack', {
@@ -11,4 +12,5 @@ new QuickSightIntegrationStack(app, 'QuickSightIntegrationStack', {
   }
 });
 
+new TenantStack(app, 'TenantStack',{});
 app.synth();
