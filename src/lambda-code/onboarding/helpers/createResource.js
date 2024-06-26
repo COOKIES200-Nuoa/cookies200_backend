@@ -11,7 +11,7 @@ function createQuickSightResource( resourceType, createCommandConstructor) {
         try {
             const response = await quickSightClient.send(command);
             if (resourceType === 'Namespace') {
-                await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10 seconds before attaching moving on // Replace with better solution later
+                await new Promise(resolve => setTimeout(resolve, 20000)); // Wait 20 seconds before attaching moving on // Replace with better solution later
             }
             console.log(`${resourceType} ${resourceParams.Name} || ${resourceParams.TemplateId} created`);
             return response;
