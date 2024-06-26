@@ -1,16 +1,13 @@
 const AWS = require('aws-sdk');
 const { authenticateUser } = require('./helpers/authenticateUser');
-// const { getCredentials } = require('./helpers/getCredentials');
-const { createDashboard } = require('./helpers/createDashboard');
 const { registerQuickSightUser } = require('./helpers/registerQuickSightUser');
 
 
-exports.quicksightOnboarding = async (event) => {
+exports.quicksightRegistration = async (event) => {
 
     var userRegistered = false;
     const userName = event.userName;
     const password = event.password;
-    const tenant = event.tenant;
 
     try {
         // ========= Login Simulation (Focus on Authentication) =========
@@ -23,9 +20,6 @@ exports.quicksightOnboarding = async (event) => {
         }
         const accessToken = authResult.AuthenticationResult.AccessToken;
         const idToken = authResult.AuthenticationResult.IdToken; 
-
-        // ========= Create Dashboard and Invite User =========
-        await createDashboard(tenant)
 
         // ========= Register Quicksight User =========
         userRegistered = await registerQuickSightUser(

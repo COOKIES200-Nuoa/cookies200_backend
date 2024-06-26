@@ -105,100 +105,96 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       })
     );
 
-    // // ========= Defining Tenant Groups =========
-
-    // const tenantGroups = ['TenantA', 'TenantB']; // Replace with trigger with user input later 
-
-    // const roleMappings: { [key: string]: any } = {};
-
-    // tenantGroups.forEach((tenantName) => {
-    //   const group = new cognito.CfnUserPoolGroup(this, `${tenantName}`, {
-    //     userPoolId: userPool.userPoolId,
-    //     groupName: tenantName,
-    //   });
-
-    //   // Create tenant-specific IAM role
-    //   const tenantRole = new iam.Role(this, `${tenantName}TenantRole`, {
-    //     assumedBy: new iam.PrincipalWithConditions(new iam.ArnPrincipal(nuoaAuthRole.roleArn), {
-    //       "StringEquals": {
-    //         "sts:ExternalId": `${tenantName}`,
-    //       },
-    //     }),
-    //     description: `Role for ${tenantName}`,
-    //   });
-
-    //   // Add permissions to tenant-specific role
-    //   tenantRole.addToPolicy(
-    //     new iam.PolicyStatement({
-    //       effect: iam.Effect.ALLOW,
-    //       actions: [
-    //         'quicksight:DescribeDashboard',
-    //         'quicksight:ListDashboards',
-    //         'quicksight:GetDashboardEmbedUrl',
-    //         'quicksight:GenerateEmbedUrlForRegisteredUser',
-    //         'quicksight:RegisterUser',
-    //       ], 
-    //       resources: [`arn:aws:quicksight:${this.region}:${this.account}:namespace/${tenantName}`], 
-    //     })
-    //   );
-
-    // // Configure the rule-based mapping
-    // roleMappings[
-    //   `cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}:${userPoolClient.userPoolClientId}` // Identity provider
-    //   ] = {
-    //       Type: 'Rules',
-    //       AmbiguousRoleResolution: 'Deny', // Or choose another resolution strategy
-    //       RulesConfiguration: {
-    //           Rules: [
-    //               {
-    //                   Claim: 'cognito:groups',
-    //                   MatchType: 'Equals',
-    //                   Value: `${tenantName}`, // Use the group name as the value
-    //                   RoleARN: tenantRole.roleArn, // Assign the role ARN
-    //               },
-    //           ],
-    //       },
-    //   };
-    // });
-
-    // const roleMappingsJson = new cdk.CfnJson(this, `RoleMappingsJson`, {
-    //   value: roleMappings,
-    // });
-
-    // // Attach the Identity Pool to the User Pool
-    // new cognito.CfnIdentityPoolRoleAttachment(this, `IdentityPoolRoleAttachment`, {
-    //   identityPoolId: identityPool.ref,
-    //   roles: {
-    //     authenticated: nuoaAuthRole.roleArn,
-    //   },
-    //   roleMappings: roleMappingsJson,
-    // });
-
     // ========= Creating lambda function =========
     const lambdaRole = new iam.Role(this, 'NuoaLambdaExecutionRole', {
-      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+      assumedBy: new iam.CompositePrincipal( // Use CompositePrincipal to combine principals
+        new iam.ServicePrincipal('lambda.amazonaws.com'),
+        new iam.ServicePrincipal('quicksight.amazonaws.com')
+      ),
     });
 
+  // Policies for creating Namespace, Dashboard, Tenant Group, Tenant Role, and Role Mapping
     lambdaRole.addToPolicy(
       new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
         actions: [
-          'quicksight:*',
+          'quicksight:CreateNamespace',
+          'quicksight:CreateTemplate',
+          'quicksight:CreateAnalysis',
+          'quicksight:CreateDashboard',
+          'quicksight:PassDataSet',
+          'quicksight:UpdateAnalysisPermissions',
+          'quicksight:UpdateDashboardPermissions',
+          'quicksight:DescribeNamespace',
+          'quicksight:DescribeTemplate',
+          'quicksight:DescribeAnalysis',
+          'quicksight:DescribeDashboard',
           'cognito-idp:AdminCreateUser',
           'cognito-idp:AdminAddUserToGroup',
+          'cognito-idp:CreateGroup',
+          'iam:CreateRole',
+          'iam:PutRolePolicy',
+          'iam:GetRole',
+          "iam:CreateServiceLinkedRole",
+          "iam:PutRolePolicy",
+          "iam:DeleteRole",
+          "iam:AttachRolePolicy",
+          "iam:DeleteRolePolicy",
+          "iam:ListRolePolicies",
+          "iam:ListAttachedRolePolicies",
+          "iam:DetachRolePolicy"
         ],
         resources: ['*'],
       })
     );
 
-    const identityPoolId = cdk.Fn.getAtt(
-      identityPool.ref,
-      'IdentityPoolId'
-    ).toString();
+    lambdaRole.addToPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          'ds:CreateIdentityPoolDirectory',
+          'ds:DescribeDirectories',
+          'ds:AuthorizeApplication',
+        ],
+        resources: [
+          `*`
+        ],
+      })
+    );
 
-    new lambda.Function(this, 'QuickSightLambda', {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      handler: 'quicksightOnboarding',
-      code: lambda.Code.fromAsset('src/lambda-function/onboarding'),
+    lambdaRole.addToPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          'iam:PassRole'
+        ],
+        resources: [
+          `arn:aws:iam::${this.account}:role/*TenantRole`,
+          `${nuoaAuthRole.roleArn}`,
+        ],
+      })
+    );
+
+    lambdaRole.addToPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          'cognito-identity:SetIdentityPoolRoles'
+        ],
+        resources: [`arn:aws:cognito-identity:${this.region}:${this.account}:identitypool/${identityPool.ref}`],
+      })
+    );
+
+    const awsSdkLambdaLayer = new lambda.LayerVersion(this, 'AwsSdkLayer', {
+      code: lambda.Code.fromAsset('src/lambda-function/layers/aws_sdk/js/'),
+      compatibleRuntimes: [lambda.Runtime.NODEJS_18_X],
+      description: 'AWS SDK for Javascript Lambda Functions'
+    })
+    
+    new lambda.Function(this, 'QuickSightRegistrationLambda', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'quicksightRegistration.quicksightRegistration',
+      code: lambda.Code.fromAsset('src/lambda-code/registerQs'),
       role: lambdaRole,
       environment: {
         REGION: this.region,
@@ -211,12 +207,40 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         USER_POOL_ID: userPool.userPoolId,
         USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
       },
+      layers: [
+        awsSdkLambdaLayer,
+      ],
+      timeout: cdk.Duration.minutes(1),
     });
+
+    const qsOnboardingFunction = new lambda.Function(this, 'QuickSightOnboardingLambda', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'quicksightOnboarding.quicksightOnboarding',
+      code: lambda.Code.fromAsset('src/lambda-code/onboarding'),
+      role: lambdaRole,
+      environment: {
+        REGION: this.region,
+        AWS_ACC_ID: this.account,
+        QUICKSIGHT_ADMIN: 'Cookies200',
+        USER_POOL_ID: userPool.userPoolId,
+        IDPOOL_ID: identityPool.ref,
+        USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
+        AUTH_ROLE_ARN: nuoaAuthRole.roleArn,
+        DATASET: 'bc93b225-e6f7-4664-8331-99e66f5b7841', // Place holder dataset
+      },
+      layers: [
+        awsSdkLambdaLayer,
+      ],
+      timeout: cdk.Duration.minutes(1),
+    });
+
+    lambdaRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'));
 
     // Export values
     new cdk.CfnOutput(this, 'UserPoolIdOutput', { value: userPool.userPoolId, exportName: 'UserPoolIdOutput'});
     new cdk.CfnOutput(this, 'UserPoolClientIdOutput', { value: userPoolClient.userPoolClientId, exportName: 'UserPoolClientIdOutput'});
     new cdk.CfnOutput(this, 'IdentityPoolIdOutput', { value: identityPool.ref , exportName: 'IdentityPoolIdOutput'});
     new cdk.CfnOutput(this, 'NuoaAuthRoleArnOutput', { value: nuoaAuthRole.roleArn , exportName: 'NuoaAuthRoleArnOutput'});
+    new cdk.CfnOutput(this, 'QSOnboardingFunctionARN', {value: qsOnboardingFunction.functionArn, exportName: 'QSOnboardingFunctionARN'});
   }
 }
