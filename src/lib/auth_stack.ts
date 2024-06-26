@@ -27,7 +27,6 @@ export class AuthStack extends cdk.Stack {
         REGION: this.region,
         USER_POOL_ID: props.userPool.userPoolId,
         IDENTITY_POOL_ID: props.identityPool.ref,
-    
       },
     });
 
