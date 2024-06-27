@@ -1,6 +1,6 @@
 const { CognitoIdentityProviderClient, CreateGroupCommand, GroupExistsException } = require("@aws-sdk/client-cognito-identity-provider"); 
 const  { IAMClient, CreateRoleCommand, PutRolePolicyCommand } = require ("@aws-sdk/client-iam");
-const { CognitoIdentityClient, SetIdentityPoolRolesCommand } = require ("@aws-sdk/client-cognito-identity");
+const { CognitoIdentityClient, SetIdentityPoolRolesCommand, GetIdentityPoolRolesCommand } = require ("@aws-sdk/client-cognito-identity");
 
 const userPoolId = process.env.USER_POOL_ID;
 const region = process.env.REGION;
@@ -14,33 +14,33 @@ const iamClient = new IAMClient({ region: region });
 const cognitoIdentityClient = new CognitoIdentityClient({ region: region});
 
 async function createTenant(tenantName) {
-    await createTenantGroup(tenantName);
+    // await createTenantGroup(tenantName);
     const tenantRoleArn = await createTenantRole(tenantName);
     console.log('Tennant role arn: ', tenantRoleArn);
     await createRoleMapping(tenantName, tenantRoleArn);
 };
 
-async function createTenantGroup(tenantName) {
-    const createGroupInput = {
-        Description: '',
-        GroupName: tenantName,
-        Precedence: 0,
-        UserPoolId: userPoolId,
-    };
+// async function createTenantGroup(tenantName) {
+//     const createGroupInput = {
+//         Description: '',
+//         GroupName: tenantName,
+//         Precedence: 0,
+//         UserPoolId: userPoolId,
+//     };
     
-    try {
-        const command = new CreateGroupCommand(createGroupInput);
-        const response = await cognitoClient.send(command);
-        console.log(`Tenant Group ${tenantName} created: `, response);
-    } catch (error) {
-        if (error instanceof GroupExistsException) {
-            console.error(`Tenant Group ${tenantName} already exists`);
-        } else {
-            console.error('Error creating Tenant Group: ', error);
-            throw error;
-        }
-    };
-};
+//     try {
+//         const command = new CreateGroupCommand(createGroupInput);
+//         const response = await cognitoClient.send(command);
+//         console.log(`Tenant Group ${tenantName} created: `, response);
+//     } catch (error) {
+//         if (error instanceof GroupExistsException) {
+//             console.error(`Tenant Group ${tenantName} already exists`);
+//         } else {
+//             console.error('Error creating Tenant Group: ', error);
+//             throw error;
+//         }
+//     };
+// };
 
 
 async function createTenantRole(tenantName) {
@@ -120,6 +120,7 @@ async function createTenantRole(tenantName) {
 
 async function createRoleMapping(tenantName, tenantRoleArn) {
     console.log('Inside createRoleMapping: tenantRoleArn: ', tenantRoleArn);
+
     const roleMappings = {
         [`cognito-idp.${region}.amazonaws.com/${userPoolId}:${userPoolClientId}`]: {
             Type: 'Rules',
@@ -142,7 +143,7 @@ async function createRoleMapping(tenantName, tenantRoleArn) {
         Roles: {
             authenticated: nuoaAuthRoleArn
         },
-        RoleMappings: roleMappings
+        RoleMappings: roleMappings,
     };
 
     try {

@@ -3,12 +3,15 @@ import { Construct } from 'constructs';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as events from 'aws-cdk-lib/aws-events';
+import * as targets from 'aws-cdk-lib/aws-events-targets';
+import * as cloudtrail from 'aws-cdk-lib/aws-cloudtrail';
 
 export class QuickSightIntegrationStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // ========= Create User Pool =========
+  // ========= Create User Pool =========
     const userPool = new cognito.UserPool(this, 'UserPool', {
       selfSignUpEnabled: false,
       userPoolName: 'TenantUserPool',
@@ -45,7 +48,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       },
     });
 
-    // ========= Creating Cognito Identity Pool =========
+  // ========= Creating Cognito Identity Pool =========
     // Create Identity Pool FIRST
     const identityPool = new cognito.CfnIdentityPool(
       this,
@@ -105,7 +108,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       })
     );
 
-    // ========= Creating lambda function =========
+  // ========= Creating lambda function =========
     const lambdaRole = new iam.Role(this, 'NuoaLambdaExecutionRole', {
       assumedBy: new iam.CompositePrincipal( // Use CompositePrincipal to combine principals
         new iam.ServicePrincipal('lambda.amazonaws.com'),
@@ -179,7 +182,8 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: [
-          'cognito-identity:SetIdentityPoolRoles'
+          'cognito-identity:SetIdentityPoolRoles',
+          'cognito-identity:GetIdentityPoolRoles',
         ],
         resources: [`arn:aws:cognito-identity:${this.region}:${this.account}:identitypool/${identityPool.ref}`],
       })
@@ -236,6 +240,21 @@ export class QuickSightIntegrationStack extends cdk.Stack {
 
     lambdaRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'));
 
+    const trail = new cloudtrail.Trail(this, 'CloudTrail');
+
+    const eventRule = cloudtrail.Trail.onEvent(this, 'MyCloudWatchEvent', {
+      target: new targets.LambdaFunction(qsOnboardingFunction),
+    });
+
+    eventRule.addEventPattern({
+      account: [this.account],
+      source: ["aws.cognito-idp"],
+      detailType: ["AWS API Call via CloudTrail"],
+      detail: {
+        eventSource: ["cognito-idp.amazonaws.com"],
+        eventName:["CreateGroup"]
+      }
+    });
     // Export values
     new cdk.CfnOutput(this, 'UserPoolIdOutput', { value: userPool.userPoolId, exportName: 'UserPoolIdOutput'});
     new cdk.CfnOutput(this, 'UserPoolClientIdOutput', { value: userPoolClient.userPoolClientId, exportName: 'UserPoolClientIdOutput'});
