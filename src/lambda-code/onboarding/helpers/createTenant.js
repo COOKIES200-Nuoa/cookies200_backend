@@ -121,20 +121,31 @@ async function createTenantRole(tenantName) {
 async function createRoleMapping(tenantName, tenantRoleArn) {
     console.log('Inside createRoleMapping: tenantRoleArn: ', tenantRoleArn);
 
-    const roleMappings = {
-        [`cognito-idp.${region}.amazonaws.com/${userPoolId}:${userPoolClientId}`]: {
-            Type: 'Rules',
-            AmbiguousRoleResolution: 'Deny',
-            RulesConfiguration: {
-                Rules: [
-                    {
-                        Claim: 'cognito:groups',
-                        MatchType: 'Equals',
-                        Value: tenantName,
-                        RoleARN: tenantRoleArn,
-                    }
-                ]
-            }
+// 1. Get Existing Role Mappings
+    const getIdentityPoolRolesCommandInput = new GetIdentityPoolRolesCommand({
+        IdentityPoolId: identityPoolId
+    });
+    const currentRolesResponse = await cognitoIdentityClient.send(getIdentityPoolRolesCommandInput);
+    const existingRoleMappings = currentRolesResponse.RoleMappings || {};
+
+// 2. Retrieve Existing Rules or Create New Array
+    const cognitoResourceId = `cognito-idp.${region}.amazonaws.com/${userPoolId}:${userPoolClientId}`;
+    const existingRules = existingRoleMappings[cognitoResourceId]?.RulesConfiguration?.Rules || [];
+
+// 3. Append New Rule to Existing Rules
+    existingRules.push({
+        Claim: 'cognito:groups',
+        MatchType: 'Equals',
+        Value: tenantName,
+        RoleARN: tenantRoleArn
+    });
+
+// 4. Update (or Create) Rule Configuration
+    existingRoleMappings[cognitoResourceId] = {
+        Type: 'Rules',
+        AmbiguousRoleResolution: 'Deny',
+        RulesConfiguration: {
+            Rules: existingRules
         }
     };
 
@@ -143,7 +154,7 @@ async function createRoleMapping(tenantName, tenantRoleArn) {
         Roles: {
             authenticated: nuoaAuthRoleArn
         },
-        RoleMappings: roleMappings,
+        RoleMappings: existingRoleMappings,
     };
 
     try {
