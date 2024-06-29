@@ -65,7 +65,6 @@ async function createTenantRole(tenantName) {
         const createRoleCommnand = new CreateRoleCommand({
             RoleName: roleTenantName,
             AssumeRolePolicyDocument:JSON.stringify(assumeRolePolicyDocument),
-            PermissionsBoundary:'',
             Description: `Role for ${tenantName}`,
         });
         const createRoleResponse = await iamClient.send(createRoleCommnand);
@@ -82,7 +81,6 @@ async function createTenantRole(tenantName) {
         await iamClient.send(putRolePolicyCommand);
 
         console.log(`${rolePolicyName} policy attached to role: ${roleTenantName}; ARN: ${roleArn}`);
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before attaching policy // Replace with better solution later
         await waitForRoleCreation(roleTenantName);
         return roleArn;
     } catch (error) {
