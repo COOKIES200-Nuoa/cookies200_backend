@@ -130,7 +130,7 @@ async function createRoleMapping(tenantName, tenantRoleArn) {
 
 // 2. Retrieve Existing Rules or Create New Array
     const cognitoResourceId = `cognito-idp.${region}.amazonaws.com/${userPoolId}:${userPoolClientId}`;
-    const existingRules = existingRoleMappings[cognitoResourceId]?.RulesConfiguration?.Rules || [];
+    const existingRules = existingRoleMappings[cognitoResourceId]?.RulesConfiguration?.Rules || []; // Extract existing rules or initialize an empty array
 
 // 3. Append New Rule to Existing Rules
     existingRules.push({
@@ -149,6 +149,7 @@ async function createRoleMapping(tenantName, tenantRoleArn) {
         }
     };
 
+// 5. Set Updated Role Mappingsd
     const params = {
         IdentityPoolId: identityPoolId,
         Roles: {

@@ -188,12 +188,6 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         resources: [`arn:aws:cognito-identity:${this.region}:${this.account}:identitypool/${identityPool.ref}`],
       })
     );
-
-    const awsSdkLambdaLayer = new lambda.LayerVersion(this, 'AwsSdkLayer', {
-      code: lambda.Code.fromAsset('src/lambda-function/layers/aws_sdk/js/'),
-      compatibleRuntimes: [lambda.Runtime.NODEJS_18_X],
-      description: 'AWS SDK for Javascript Lambda Functions'
-    })
     
     new lambda.Function(this, 'QuickSightRegistrationLambda', {
       runtime: lambda.Runtime.NODEJS_18_X,
@@ -211,9 +205,6 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         USER_POOL_ID: userPool.userPoolId,
         USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
       },
-      layers: [
-        awsSdkLambdaLayer,
-      ],
       timeout: cdk.Duration.minutes(1),
     });
 
@@ -232,9 +223,6 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         AUTH_ROLE_ARN: nuoaAuthRole.roleArn,
         DATASET: 'bc93b225-e6f7-4664-8331-99e66f5b7841', // Place holder dataset
       },
-      layers: [
-        awsSdkLambdaLayer,
-      ],
       timeout: cdk.Duration.minutes(1),
     });
 
