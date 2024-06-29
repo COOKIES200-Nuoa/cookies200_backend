@@ -1,50 +1,58 @@
-import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
-import * as cognito from 'aws-cdk-lib/aws-cognito';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as apigw from 'aws-cdk-lib/aws-apigateway';
-import * as iam from 'aws-cdk-lib/aws-iam'; 
+import {
+  aws_lambda as lambda,
+  aws_apigateway as apigateway,
+  aws_cognito as cognito,
+} from "aws-cdk-lib";
+import { Construct } from "constructs";
+import { Stack, StackProps, CfnOutput } from "aws-cdk-lib";
 
-interface AuthStackProps extends cdk.StackProps {
-  userPool: cognito.UserPool;
-  userPoolClient: cognito.UserPoolClient;
-  identityPool: cognito.CfnIdentityPool;
-  authRole: iam.Role;
-}
-
-export class AuthStack extends cdk.Stack {
-  public readonly loginApiUrl: cdk.CfnOutput;
-  constructor(scope: Construct, id: string, props: AuthStackProps) {
+export class AuthStack extends Stack {
+  constructor(scope: Construct, id: string, userPool: cognito.UserPool, props?: StackProps) {
     super(scope, id, props);
 
-    // ========= Creating lambda function =========
-    const getDashboardUrlFunction = new lambda.Function(this, 'GetDashboardUrlFunction', {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      handler: 'getDashboardUrl.handler',
-      code: lambda.Code.fromAsset('src/lambda-code/QSaccess'), 
-      role: props.authRole,
-      environment: {
-        REGION: this.region,
-        USER_POOL_ID: props.userPool.userPoolId,
-        IDENTITY_POOL_ID: props.identityPool.ref,
+    // Define a new Lambda resource
+    const generateDashboardUrlFunc = new lambda.Function(
+      this,
+      "BackendHandler",
+      {
+        runtime: lambda.Runtime.NODEJS_20_X,
+        code: lambda.Code.fromAsset("src/lambda-code/QSaccess/generateDashboardUrl.js"),
+        handler: "getDashboardUrl.handler",
+      }
+    );
+
+    // Define the API Gateway
+    const api = new apigateway.RestApi(this, "UserApi", {
+      restApiName: "Login API",
+      description: "API to handle user login and return dashboard URL",
+    });
     
-      },
-    });
+    const authorizer = new apigateway.CognitoUserPoolsAuthorizer(
+      this,
+      "UserAuthorizer",
+      {
+        cognitoUserPools: [userPool],
+      }
+    );
 
-    // ========= API Gateway =========
-    const api = new apigw.RestApi(this, 'LoginApi', {
-      restApiName: 'Login API',
-      description: 'API to handle user login and return dashboard URL',
+    // Lambda Integration
+    const lambdaIntegration = new apigateway.LambdaIntegration(
+      generateDashboardUrlFunc,
+      {
+        requestTemplates: { "application/json": '{ "statusCode": "200" }' },
+      }
+    );
+    // Define a new resource and method with Cognito Authorizer
+    const loginResource = api.root.addResource("login");
+    loginResource.addMethod("POST", lambdaIntegration, {
+      authorizer: authorizer,
     });
-
-    const loginIntegration = new apigw.LambdaIntegration(getDashboardUrlFunction);
-    const loginResource = api.root.addResource('login'); 
-    loginResource.addMethod('POST', loginIntegration); // POST method for /login
 
     // ========= Output API Gateway Endpoint =========
-    this.loginApiUrl = new cdk.CfnOutput(this, 'LoginApiUrl', {
-      value: api.url + 'login', // Output the full URL for the /login endpoint
-      description: 'The URL to call for user login and retrieving the dashboard URL',
+    new CfnOutput(this, "LoginApiUrl", {
+      value: api.url + "login",
+      description:
+        "The URL to call for user login and retrieving the dashboard URL",
     });
   }
 }
