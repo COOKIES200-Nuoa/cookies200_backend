@@ -3,7 +3,7 @@ const {
     DescribeDashboardCommand,
     DescribeNamespaceCommand,
     DescribeTemplateCommand,
-    DescribeAnalysisCommand
+    DescribeAnalysisCommand,
 } = require('@aws-sdk/client-quicksight');
 
 const region = process.env.REGION;
@@ -17,26 +17,35 @@ function createQuickSightResource(resourceType, createCommandConstructor) {
       try {
         const response = await quickSightClient.send(command);
         
-        // After creation, immediately wait for the resource to be ready
-        const describeParams = {
-          AwsAccountId: resourceParams.AwsAccountId,
-        };
-  
-        if (resourceType === 'Template') {
-          describeParams.TemplateId = resourceParams.TemplateId;
-        } else if (resourceType === 'Dashboard') {
-          describeParams.DashboardId = resourceParams.DashboardId;
-        } else if (resourceType === 'Namespace') {
-          describeParams.Namespace = resourceParams.Namespace;
-        } else if (resourceType === 'Analysis') {
-          describeParams.AnalysisId = resourceParams.AnalysisId;
+        if (resourceType !== 'User') {
+          // After creation, immediately wait for the resource to be ready
+          const describeParams = {
+            AwsAccountId: resourceParams.AwsAccountId,
+          };
+
+          switch (resourceType.toLowerCase()) {
+            case 'template':
+              describeParams.TemplateId = resourceParams.TemplateId;
+              break;
+            case 'dashboard':
+              describeParams.DashboardId = resourceParams.DashboardId;
+              break;
+            case 'namespace':
+              describeParams.Namespace = resourceParams.Namespace;
+              break;
+            case 'analysis':
+              describeParams.AnalysisId = resourceParams.AnalysisId;
+              break;
+            default:
+              break;
+          }
+    
+          const statusResponse = await waitForQuickSightOperation(
+            resourceType,
+            describeParams,
+            ["CREATION_SUCCESSFUL", "CREATED"] // Adjust if needed for specific resource type
+          );
         }
-  
-        const statusResponse = await waitForQuickSightOperation(
-          resourceType,
-          describeParams,
-          ["CREATION_SUCCESSFUL", "CREATED"] // Adjust if needed for specific resource type
-        );
   
         console.log(`${resourceType} ${resourceParams.Name || resourceParams.TemplateId} created`);
         return response;
