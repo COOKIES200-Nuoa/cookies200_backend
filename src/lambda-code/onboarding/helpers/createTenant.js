@@ -159,14 +159,14 @@ async function waitForRoleCreation(roleName, retryDelay = 2000, maxRetries = 10)
     while (retries < maxRetries) {
         try {
             const command = new GetRoleCommand({ RoleName: roleName });
-            await iamClient.send(command); // No need to store the response, just need successful execution
-            return; // Role exists, we can proceed
+            await iamClient.send(command); 
+            return; 
         } catch (error) {
             if (error.Code === "NoSuchEntity") {
                 retries++;
                 await new Promise(resolve => setTimeout(resolve, retryDelay));
             } else {
-                throw error; // Unexpected error
+                throw error;
             }
         }
     }
