@@ -33,7 +33,6 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
     const baseTemplateName = `Minimal Template`;
 
 // ========= Create Namespace Params =========
-    // Move to CDK Stack later
     const createNameSpaceParams = {
         AwsAccountId: awsAccountId,
         IdentityStore: "QUICKSIGHT",

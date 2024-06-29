@@ -14,7 +14,6 @@ const iamClient = new IAMClient({ region: region });
 const cognitoIdentityClient = new CognitoIdentityClient({ region: region});
 
 async function createTenant(tenantName) {
-    // await createTenantGroup(tenantName);
     const tenantRoleArn = await createTenantRole(tenantName);
     console.log('Tennant role arn: ', tenantRoleArn);
     await createRoleMapping(tenantName, tenantRoleArn);
@@ -30,7 +29,7 @@ async function createTenantRole(tenantName) {
                 {
                     Effect: "Allow",
                     Principal: {
-                        AWS: nuoaAuthRoleArn, // Assuming nuoaAuthRoleArn is the ARN of the role allowed to assume this role
+                        AWS: nuoaAuthRoleArn,
                     },
                     Action: "sts:AssumeRole",
                     Condition: {
@@ -88,7 +87,7 @@ async function createTenantRole(tenantName) {
             console.error("Role already exists.");
         } else {
             console.error("Error creating tenant role:", error);
-            throw error; // Rethrow the error to indicate failure
+            throw error; 
         }
     }
 };
