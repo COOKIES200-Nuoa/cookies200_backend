@@ -20,7 +20,6 @@ function createQuickSightResource(resourceType, createCommandConstructor) {
         // After creation, immediately wait for the resource to be ready
         const describeParams = {
           AwsAccountId: resourceParams.AwsAccountId,
-          
         };
   
         if (resourceType === 'Template') {

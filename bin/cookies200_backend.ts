@@ -11,6 +11,4 @@ new QuickSightIntegrationStack(app, 'QuickSightIntegrationStack', {
     region: process.env.CDK_DEFAULT_REGION,
   }
 });
-
-new TenantStack(app, 'TenantStack',{});
 app.synth();
