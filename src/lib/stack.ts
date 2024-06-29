@@ -8,11 +8,13 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as cloudtrail from 'aws-cdk-lib/aws-cloudtrail';
 
 export class QuickSightIntegrationStack extends cdk.Stack {
+  public readonly userPool: cognito.UserPool; 
+
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
   // ========= Create User Pool =========
-    const userPool = new cognito.UserPool(this, 'UserPool', {
+    this.userPool = new cognito.UserPool(this, 'UserPool', {
       selfSignUpEnabled: false,
       userPoolName: 'TenantUserPool',
       autoVerify: { email: true },
@@ -36,11 +38,11 @@ export class QuickSightIntegrationStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, 'UserPoolId', {
-      value: userPool.userPoolId,
+      value: this.userPool.userPoolId,
     });
 
     const userPoolClient = new cognito.UserPoolClient(this, 'UserPoolClient', {
-      userPool,
+      userPool: this.userPool,
       generateSecret: false,
       userPoolClientName: 'NuoaQuicksight',
       authFlows: {
@@ -59,7 +61,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         cognitoIdentityProviders: [
           {
             clientId: userPoolClient.userPoolClientId,
-            providerName: userPool.userPoolProviderName,
+            providerName: this.userPool.userPoolProviderName,
             serverSideTokenCheck: true,
           },
         ],
@@ -202,7 +204,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         EMAIL: 's3938145@rmit.edu.vn',
         QUICKSIGHT_ADMIN: 'Cookies200',
         IDPOOL_ID: identityPool.ref,
-        USER_POOL_ID: userPool.userPoolId,
+        USER_POOL_ID: this.userPool.userPoolId,
         USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
       },
       timeout: cdk.Duration.minutes(1),
@@ -217,7 +219,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         REGION: this.region,
         AWS_ACC_ID: this.account,
         QUICKSIGHT_ADMIN: 'Cookies200',
-        USER_POOL_ID: userPool.userPoolId,
+        USER_POOL_ID: this.userPool.userPoolId,
         IDPOOL_ID: identityPool.ref,
         USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
         AUTH_ROLE_ARN: nuoaAuthRole.roleArn,
@@ -244,7 +246,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       }
     });
     // Export values
-    new cdk.CfnOutput(this, 'UserPoolIdOutput', { value: userPool.userPoolId, exportName: 'UserPoolIdOutput'});
+    new cdk.CfnOutput(this, 'UserPoolIdOutput', { value: this.userPool.userPoolId, exportName: 'UserPoolIdOutput'});
     new cdk.CfnOutput(this, 'UserPoolClientIdOutput', { value: userPoolClient.userPoolClientId, exportName: 'UserPoolClientIdOutput'});
     new cdk.CfnOutput(this, 'IdentityPoolIdOutput', { value: identityPool.ref , exportName: 'IdentityPoolIdOutput'});
     new cdk.CfnOutput(this, 'NuoaAuthRoleArnOutput', { value: nuoaAuthRole.roleArn , exportName: 'NuoaAuthRoleArnOutput'});

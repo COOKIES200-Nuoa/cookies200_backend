@@ -16,8 +16,8 @@ export class AuthStack extends Stack {
       "BackendHandler",
       {
         runtime: lambda.Runtime.NODEJS_20_X,
-        code: lambda.Code.fromAsset("src/lambda-code/QSaccess/generateDashboardUrl.js"),
-        handler: "getDashboardUrl.handler",
+        code: lambda.Code.fromAsset("src/lambda-code/QSaccess"),
+        handler: "generateDashboardUrl.handler",
       }
     );
 

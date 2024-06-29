@@ -7,21 +7,45 @@ import { TenantStack } from "../src/lib/tenant_stack";
 
 const app = new cdk.App();
 
+// new QuickSightIntegrationStack(
+//   app,
+//   "QuickSightIntegrationStack",
+//   {
+//     env: {
+//       account: process.env.CDK_DEFAULT_ACCOUNT,
+//       region: process.env.CDK_DEFAULT_REGION,
+//     },
+//   }
+// );
+
+const qsIntegrationStack = new QuickSightIntegrationStack(
+  app,
+  "QuickSightIntegrationStack",
+  {
+    env: {
+      account: process.env.CDK_DEFAULT_ACCOUNT,
+      region: process.env.CDK_DEFAULT_REGION,
+    },
+  }
+);
+
+const authStack = new AuthStack(
+  app,
+  "AuthStack", qsIntegrationStack.userPool,
+  {
+    env: {
+      account: process.env.CDK_DEFAULT_ACCOUNT,
+      region: process.env.CDK_DEFAULT_REGION,
+    },
+  }
+);
 // new AuthStack(app, "AuthStack", {
-//   env: {
-//     account: process.env.CDK_DEFAULT_ACCOUNT,
-//     region: process.env.CDK_DEFAULT_REGION,
-//   },
+//   userPoolId: "your-user-pool-id",
+//   userPoolArn: "your-user-pool-arn",
+//   userPoolProviderName: "your-user-pool-provider-name",
+//   userPoolProviderUrl: "your-user-pool-provider-url",
+//   // add other required properties here
 // });
-
-new QuickSightIntegrationStack(app, "QuickSightIntegrationStack", {
-  env: {
-    account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: process.env.CDK_DEFAULT_REGION,
-  },
-});
-
-// new AuthStack(app, "AuthStack", quickSightIntegrationStack.userPool);
 
 new TenantStack(app, "TenantStack", {});
 app.synth();
