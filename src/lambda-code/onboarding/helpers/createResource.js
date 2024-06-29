@@ -85,7 +85,7 @@ async function waitForQuickSightOperation(
                 throw new Error(`Unsupported resource type: ${resourceType}`);
         }
 
-        const response = await quicksightClient.send(command);
+        const response = await quickSightClient.send(command);
         const status = statusPath.split('.').reduce((obj, key) => obj[key], response);
 
         if (desiredStatuses.includes(status)) {
