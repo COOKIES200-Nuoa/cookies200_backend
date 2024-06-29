@@ -3,7 +3,7 @@ import "source-map-support/register";
 import * as cdk from "aws-cdk-lib";
 import { AuthStack } from "../src/lib/auth_stack";
 import { QuickSightIntegrationStack } from "../src/lib/stack";
-import { TenantStack } from "../src/lib/tenant_stack";
+// import { TenantStack } from "../src/lib/tenant_stack";
 
 const app = new cdk.App();
 
@@ -47,5 +47,5 @@ const authStack = new AuthStack(
 //   // add other required properties here
 // });
 
-new TenantStack(app, "TenantStack", {});
+// new TenantStack(app, "TenantStack", {});
 app.synth();

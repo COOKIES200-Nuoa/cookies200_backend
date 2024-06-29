@@ -134,6 +134,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
           'quicksight:DescribeTemplate',
           'quicksight:DescribeAnalysis',
           'quicksight:DescribeDashboard',
+          'quicksight:RegisterUser',
           'cognito-idp:AdminCreateUser',
           'cognito-idp:AdminAddUserToGroup',
           'cognito-idp:CreateGroup',

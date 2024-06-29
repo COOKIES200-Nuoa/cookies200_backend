@@ -1,5 +1,5 @@
-const { CognitoIdentityProviderClient, CreateGroupCommand, GroupExistsException } = require("@aws-sdk/client-cognito-identity-provider"); 
-const  { IAMClient, CreateRoleCommand, PutRolePolicyCommand } = require ("@aws-sdk/client-iam");
+const { CognitoIdentityProviderClient } = require("@aws-sdk/client-cognito-identity-provider"); 
+const  { IAMClient, CreateRoleCommand, PutRolePolicyCommand, GetRoleCommand } = require ("@aws-sdk/client-iam");
 const { CognitoIdentityClient, SetIdentityPoolRolesCommand, GetIdentityPoolRolesCommand } = require ("@aws-sdk/client-cognito-identity");
 
 const userPoolId = process.env.USER_POOL_ID;
@@ -18,30 +18,8 @@ async function createTenant(tenantName) {
     const tenantRoleArn = await createTenantRole(tenantName);
     console.log('Tennant role arn: ', tenantRoleArn);
     await createRoleMapping(tenantName, tenantRoleArn);
+    return tenantRoleArn;
 };
-
-// async function createTenantGroup(tenantName) {
-//     const createGroupInput = {
-//         Description: '',
-//         GroupName: tenantName,
-//         Precedence: 0,
-//         UserPoolId: userPoolId,
-//     };
-    
-//     try {
-//         const command = new CreateGroupCommand(createGroupInput);
-//         const response = await cognitoClient.send(command);
-//         console.log(`Tenant Group ${tenantName} created: `, response);
-//     } catch (error) {
-//         if (error instanceof GroupExistsException) {
-//             console.error(`Tenant Group ${tenantName} already exists`);
-//         } else {
-//             console.error('Error creating Tenant Group: ', error);
-//             throw error;
-//         }
-//     };
-// };
-
 
 async function createTenantRole(tenantName) {
     const roleTenantName = `${tenantName}TenantRole`;
@@ -94,8 +72,6 @@ async function createTenantRole(tenantName) {
 
         console.log(`Role created: ${roleArn}`);
 
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before attaching policy // Replace with better solution later
-
         // Add Role Policies
         const putRolePolicyCommand = new PutRolePolicyCommand({
             RoleName: roleTenantName,
@@ -105,8 +81,7 @@ async function createTenantRole(tenantName) {
         await iamClient.send(putRolePolicyCommand);
 
         console.log(`${rolePolicyName} policy attached to role: ${roleTenantName}; ARN: ${roleArn}`);
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before attaching policy // Replace with better solution later
-
+        await waitForRoleCreation(roleTenantName);
         return roleArn;
     } catch (error) {
         if (error.Code === "EntityAlreadyExists") {
@@ -165,14 +140,36 @@ async function createRoleMapping(tenantName, tenantRoleArn) {
     } catch (error) {
         if (error.Code === 'InvalidParameterException') {
             console.error("Invalid parameters:", error.message);
+            throw error;
         } else if (error.Code === 'ResourceNotFoundException') {
             console.error("Identity pool or role not found:", error.message);
+            throw error;
         } else if (error.Code === 'NotAuthorizedException') {
             console.error("Not authorized to perform this action:", error.message);
+            throw error;
         } else {
             console.error("Unexpected error:", error);
+            throw error;
         }
-        throw error;
     }
 };
 module.exports = { createTenant };
+
+async function waitForRoleCreation(roleName, retryDelay = 2000, maxRetries = 10) {
+    let retries = 0;
+    while (retries < maxRetries) {
+        try {
+            const command = new GetRoleCommand({ RoleName: roleName });
+            await iamClient.send(command); // No need to store the response, just need successful execution
+            return; // Role exists, we can proceed
+        } catch (error) {
+            if (error.Code === "NoSuchEntity") {
+                retries++;
+                await new Promise(resolve => setTimeout(resolve, retryDelay));
+            } else {
+                throw error; // Unexpected error
+            }
+        }
+    }
+    throw new Error(`Role creation timed out after ${maxRetries} retries`);
+}

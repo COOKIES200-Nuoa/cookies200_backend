@@ -3,6 +3,7 @@ const {
     CreateTemplateCommand,
     CreateAnalysisCommand,
     CreateDashboardCommand,
+    RegisterUserCommand,
 } = require('@aws-sdk/client-quicksight');
 
 const { createQuickSightResource } = require('./createResource');
@@ -16,8 +17,9 @@ const createNamespace = createQuickSightResource('Namespace', CreateNamespaceCom
 const createTemplate = createQuickSightResource('Template ', CreateTemplateCommand);
 const createAnalysis = createQuickSightResource('Analysis', CreateAnalysisCommand);
 const createDashboard = createQuickSightResource('Dashboard', CreateDashboardCommand);
+const registerUser = createQuickSightResource('User', RegisterUserCommand);
 
-async function createQSDashboard(tenant) {
+async function createQSDashboard(tenant, email, tenantRoleArn) {
     console.log('Tenant in createDashboard: ', tenant);
 
     const dashboardId = `${tenant}-dashboard`;
@@ -111,7 +113,7 @@ async function createQSDashboard(tenant) {
         ]
     };
 
-    // ========= Create Dashboard Params =========
+// ========= Create Dashboard Params =========
     const createDashboardParams = {
         AwsAccountId: awsAccountId,
         DashboardId: dashboardId,
@@ -157,15 +159,26 @@ async function createQSDashboard(tenant) {
         ]
     };
 
+// ========= Register User Params =========
+    const registerUserParams = {
+        AwsAccountId: awsAccountId,
+        Email: email,
+        IdentityType: 'IAM',
+        Namespace: tenant,
+        UserRole: 'READER',
+        SessionName: tenant,
+        IamArn: tenantRoleArn,
+    }
+
     try {
         await createNamespace(createNameSpaceParams);
         await createTemplate(createTemplateParams);
         await createAnalysis(createAnalysisParams);
         await createDashboard(createDashboardParams);
+        await registerUser(registerUserParams);
 
     } catch (error) {
         console.log('Error creating Quicksight Resource: ', error);
     }
 };
-
 module.exports = { createQSDashboard };
