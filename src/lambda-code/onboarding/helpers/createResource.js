@@ -39,8 +39,7 @@ function createQuickSightResource(resourceType, createCommandConstructor) {
             default:
               break;
           }
-    
-          const statusResponse = await waitForQuickSightOperation(
+          await waitForQuickSightOperation(
             resourceType,
             describeParams,
             ["CREATION_SUCCESSFUL", "CREATED"] // Adjust if needed for specific resource type
@@ -108,5 +107,5 @@ async function waitForQuickSightOperation(
     }
 
     throw new Error(`Operation timed out after ${maxRetries} retries`);
-}
+};
 

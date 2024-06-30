@@ -14,7 +14,6 @@ const iamClient = new IAMClient({ region: region });
 const cognitoIdentityClient = new CognitoIdentityClient({ region: region});
 
 async function createTenant(tenantName) {
-    // await createTenantGroup(tenantName);
     const tenantRoleArn = await createTenantRole(tenantName);
     console.log('Tennant role arn: ', tenantRoleArn);
     await createRoleMapping(tenantName, tenantRoleArn);
@@ -30,7 +29,7 @@ async function createTenantRole(tenantName) {
                 {
                     Effect: "Allow",
                     Principal: {
-                        AWS: nuoaAuthRoleArn, // Assuming nuoaAuthRoleArn is the ARN of the role allowed to assume this role
+                        AWS: nuoaAuthRoleArn,
                     },
                     Action: "sts:AssumeRole",
                     Condition: {
@@ -88,7 +87,7 @@ async function createTenantRole(tenantName) {
             console.error("Role already exists.");
         } else {
             console.error("Error creating tenant role:", error);
-            throw error; // Rethrow the error to indicate failure
+            throw error; 
         }
     }
 };
@@ -160,14 +159,14 @@ async function waitForRoleCreation(roleName, retryDelay = 2000, maxRetries = 10)
     while (retries < maxRetries) {
         try {
             const command = new GetRoleCommand({ RoleName: roleName });
-            await iamClient.send(command); // No need to store the response, just need successful execution
-            return; // Role exists, we can proceed
+            await iamClient.send(command); 
+            return; 
         } catch (error) {
             if (error.Code === "NoSuchEntity") {
                 retries++;
                 await new Promise(resolve => setTimeout(resolve, retryDelay));
             } else {
-                throw error; // Unexpected error
+                throw error;
             }
         }
     }

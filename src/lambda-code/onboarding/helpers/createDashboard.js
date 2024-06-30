@@ -33,7 +33,6 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
     const baseTemplateName = `Minimal Template`;
 
 // ========= Create Namespace Params =========
-    // Move to CDK Stack later
     const createNameSpaceParams = {
         AwsAccountId: awsAccountId,
         IdentityStore: "QUICKSIGHT",
@@ -45,9 +44,9 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
     const minimalTemplateDefinition = {
         DataSetConfigurations: [
             {
-                Placeholder: "Placeholder_dataset", // Replace with your placeholder name
+                Placeholder: "Placeholder_dataset", 
                 DataSetSchema: {
-                    ColumnSchemaList: [] // Leave this empty for now, you'll add columns later
+                    ColumnSchemaList: [] 
                 }
             }
         ],
@@ -56,7 +55,7 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
                 SheetId: "sheet1",
                 Name: "Sheet 1",
                 FilterControls: [],
-                Visuals: [], // No visuals on this initial sheet
+                Visuals: [],
             }
         ]
     };
