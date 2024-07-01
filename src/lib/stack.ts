@@ -35,10 +35,6 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       },
     });
 
-    new cdk.CfnOutput(this, 'UserPoolId', {
-      value: userPool.userPoolId,
-    });
-
     const userPoolClient = new cognito.UserPoolClient(this, 'UserPoolClient', {
       userPool,
       generateSecret: false,
@@ -50,9 +46,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
 
   // ========= Creating Cognito Identity Pool =========
     // Create Identity Pool FIRST
-    const identityPool = new cognito.CfnIdentityPool(
-      this,
-      'TenantIdentityPool',
+    const identityPool = new cognito.CfnIdentityPool(this, 'TenantIdentityPool',
       {
         identityPoolName: 'TenantIdentityPool',
         allowUnauthenticatedIdentities: false,
@@ -87,6 +81,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       ),
       description: 'Default role for authenticated users',
     });
+
     // Add policies for cognito operations
     nuoaAuthRole.addToPolicy(
       new iam.PolicyStatement({
@@ -99,6 +94,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         resources: ['*'],
       })
     );
+    
     // Add policies for assume tenant role
     nuoaAuthRole.addToPolicy(
       new iam.PolicyStatement({
@@ -116,7 +112,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       ),
     });
 
-  // Policies for creating Namespace, Dashboard, Tenant Group, Tenant Role, and Role Mapping
+    // Policies for creating Dashboard, Tenant Group, Tenant Role, and Role Mapping
     lambdaRole.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
@@ -133,9 +129,25 @@ export class QuickSightIntegrationStack extends cdk.Stack {
           'quicksight:DescribeAnalysis',
           'quicksight:DescribeDashboard',
           'quicksight:RegisterUser',
-          'cognito-idp:AdminCreateUser',
-          'cognito-idp:AdminAddUserToGroup',
+        ],
+        resources: ['*'],
+      })
+    );
+
+    lambdaRole.addToPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
           'cognito-idp:CreateGroup',
+        ],
+        resources: ['*'],
+      })
+    );
+
+    lambdaRole.addToPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
           'iam:CreateRole',
           'iam:PutRolePolicy',
           'iam:GetRole',
@@ -146,12 +158,13 @@ export class QuickSightIntegrationStack extends cdk.Stack {
           "iam:DeleteRolePolicy",
           "iam:ListRolePolicies",
           "iam:ListAttachedRolePolicies",
-          "iam:DetachRolePolicy"
+          "iam:DetachRolePolicy",
         ],
         resources: ['*'],
       })
     );
 
+    // Directory Services policies for creating Namespace
     lambdaRole.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
@@ -186,7 +199,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
           'cognito-identity:SetIdentityPoolRoles',
           'cognito-identity:GetIdentityPoolRoles',
         ],
-        resources: [`arn:aws:cognito-identity:${this.region}:${this.account}:identitypool/${identityPool.ref}`],
+        resources: [`*`],
       })
     );
     
@@ -217,7 +230,6 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       environment: {
         REGION: this.region,
         AWS_ACC_ID: this.account,
-        QUICKSIGHT_ADMIN: 'Cookies200',
         USER_POOL_ID: userPool.userPoolId,
         IDPOOL_ID: identityPool.ref,
         USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
