@@ -6,6 +6,8 @@ const quicksight = new AWS.QuickSight();
 
 const USER_POOL_ID = process.env.USER_POOL_ID;
 const CLIENT_ID = process.env.CLIENT_ID;
+const AWS_ACCOUNT_ID = process.env.AWS_ACCOUNT_ID;
+const AWS_REGION = process.env.AWS_REGION;
 
 /**
  * Authenticate user with Cognito and get user details
@@ -91,16 +93,12 @@ function getCognitoUserGroups(accessToken) {
  * Generate QuickSight embedded URL for the user dashboard
  * @param {string} userEmail 
  */
-/**
- * Generate QuickSight embedded URL for the user dashboard
- * @param {string} userEmail 
- */
 
 async function generateQuickSightURL(userEmail) {
     const userGroup = await getCognitoUserGroups(accessToken);
 
     //arn:aws:quicksight:ap-southeast-1:891377270638:user/TenantK/TenantKTenantRole/TenantK
-    const userArn = `arn:aws:quicksight:${process.env.AWS_REGION}:${process.env.AWS_ACCOUNT_ID}:user/${userGroup}/${tenantName}TenantRole/${userGroup}`;
+    const userArn = `arn:aws:quicksight:${AWS_REGION}:${AWS_ACCOUNT_ID}:user/${userGroup}/${userGroup}TenantRole/${userGroup}`;
 
     const experienceConfiguration = {
         Dashboard: {
@@ -109,7 +107,7 @@ async function generateQuickSightURL(userEmail) {
     };
 
     const params = {
-        AwsAccountId: process.env.AWS_ACCOUNT_ID,
+        AwsAccountId: AWS_ACCOUNT_ID,
         UserArn: userArn,
         // SessionLifetimeInMinutes: 100,  // Adjust as necessary within the allowed range
         ExperienceConfiguration: experienceConfiguration
