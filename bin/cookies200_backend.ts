@@ -32,6 +32,7 @@ const qsIntegrationStack = new QuickSightIntegrationStack(
 const authStack = new AuthStack(
   app,
   "AuthStack", qsIntegrationStack.userPool,
+  qsIntegrationStack.userPoolClientId,
   {
     env: {
       account: process.env.CDK_DEFAULT_ACCOUNT,

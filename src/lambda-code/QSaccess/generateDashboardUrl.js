@@ -1,5 +1,4 @@
 const AWS = require('aws-sdk');
-const axios = require('axios'); // Assuming axios is used for HTTP requests
 const jwt = require('jsonwebtoken');
 
 const cognito = new AWS.CognitoIdentityServiceProvider();
@@ -13,10 +12,10 @@ const CLIENT_ID = process.env.CLIENT_ID;
  * @param {string} username 
  * @param {string} password 
  */
-async function authenticateUser(username, password) {
+async function authUserToFetchAccessToken(username, password) {
     const params = {
         AuthFlow: 'USER_PASSWORD_AUTH',
-        ClientId: CLIENT_ID,
+        ClientId: CLIENT_ID, //app-client-id?
         UserPoolId: USER_POOL_ID,
         AuthParameters: {
             USERNAME: username,
@@ -38,66 +37,54 @@ async function authenticateUser(username, password) {
  * Get user's email from Cognito using access token
  * @param {string} accessToken 
  */
-// async function getUserEmail(accessToken) {
+/* @param {string} token - The JWT access token from Cognito.
+ * @returns {string[]} - An array of groups the user belongs to.*/
+function getCognitoUserGroups(accessToken) {
+    try {
+        const decodedToken = jwt.decode(accessToken);
+        const groups = decodedToken['cognito:groups'] || [];  // Returns an empty array if no groups are found
+        if (!groups || groups.length === 0) {
+            throw new Error('No group found in the access token. ');
+        }
+        return groups[0];
+    } catch (error) {
+        console.error('Failed to decode token:', error);
+        throw new Error('Invalid token');
+    }
+}   
+// function getCognitoUsername(accessToken) {
+//     try {
+//         const decodedToken = jwt.decode(accessToken);
+//         const names = decodedToken['cognito:username'] || [];  // Returns an empty array if no groups are found
+//         if (!names || names.length === 0) {
+//             throw new Error('No username found in the access token. ');
+//         }
+//         return names[0];
+//     } catch (error) {
+//         console.error('Failed to decode token:', error);
+//         throw new Error('Invalid token');
+//     }
+// }   
+
+// async function getUserInfo(accessToken) {
 //     const params = {
 //         AccessToken: accessToken
 //     };
 
 //     try {
 //         const userInfo = await cognito.getUser(params).promise();
-//         const emailAttribute = userInfo.UserAttributes.find(attr => attr.Name === 'email');
-//         return emailAttribute ? emailAttribute.Value : null;
+
+//         // Extract the username
+//         const username = userInfo.Username; //cogito-username
+//         const groupName = getCognitoUserGroups(accessToken); //tenant
+        
+
+//         return { username };
 //     } catch (error) {
-//         console.error('Error retrieving user email:', error);
-//         throw new Error('Failed to retrieve user email');
+//         console.error('Error retrieving user info:', error);
+//         throw new Error('Failed to retrieve user information');
 //     }
 // }
-
-/* @param {string} token - The JWT access token from Cognito.
- * @returns {string[]} - An array of groups the user belongs to.*/
-function getCognitoUserGroups(token) {
-    try {
-        const decodedToken = jwt.decode(token);
-        return decodedToken['cognito:groups'] || [];  // Returns an empty array if no groups are found
-    } catch (error) {
-        console.error('Failed to decode token:', error);
-        throw new Error('Invalid token');
-    }
-}   
-
-// Example usage within an async function
-async function handleUserAuthentication(accessToken) {
-    try {
-        const userGroups = getCognitoUserGroups(accessToken);
-        console.log('User belongs to groups:', userGroups);
-        // Further processing based on groups
-    } catch (error) {
-        console.error('Error processing the access token:', error);
-    }
-}
-
-async function getUserInfo(accessToken) {
-    const params = {
-        AccessToken: accessToken
-    };
-
-    try {
-        const userInfo = await cognito.getUser(params).promise();
-
-        // Extract the username
-        const username = userInfo.Username;
-
-        // Extract Cognito groups from user attributes
-        // const groupsAttribute = userInfo.UserAttributes.find(attr => attr.Name === 'cognito:groups');
-        // const groups = groupsAttribute ? groupsAttribute.Value.split(',') : [];
-        // const group = await cognito.getGroup.
-
-        return { username };
-    } catch (error) {
-        console.error('Error retrieving user info:', error);
-        throw new Error('Failed to retrieve user information');
-    }
-}
 
 
 /**
@@ -110,8 +97,10 @@ async function getUserInfo(accessToken) {
  */
 
 async function generateQuickSightURL(userEmail) {
-    //"Arn": "arn:aws:quicksight:ap-southeast-1:891377270638:user/TenantK/TenantKTenantRole/TenantK"
-    const userArn = `arn:aws:quicksight:${process.env.AWS_REGION}:${process.env.AWS_ACCOUNT_ID}:user/default/${userEmail}`;
+    const userGroup = await getCognitoUserGroups(accessToken);
+
+    //arn:aws:quicksight:ap-southeast-1:891377270638:user/TenantK/TenantKTenantRole/TenantK
+    const userArn = `arn:aws:quicksight:${process.env.AWS_REGION}:${process.env.AWS_ACCOUNT_ID}:user/${userGroup}/${tenantName}TenantRole/${userGroup}`;
 
     const experienceConfiguration = {
         Dashboard: {
@@ -142,7 +131,7 @@ exports.handler = async (event) => {
         // const dashboardId = event.dashboardId;
 
         // Authenticate user
-        const accessToken = await authenticateUser(username, password);
+        const accessToken = await authUserToFetchAccessToken(username, password);
 
         // // Get user email
         // const userEmail = await getUserEmail(accessToken);
