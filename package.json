@@ -16,7 +16,6 @@
     "@aws-sdk/client-iam": "^3.600.0",
     "@aws-sdk/client-quicksight": "^3.600.0",
     "aws-cdk-lib": "^2.139.1",
-    "aws-sdk": "^2.1647.0",
     "constructs": "^10.3.0",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2"

@@ -5,7 +5,7 @@ import {
   aws_cognito as cognito,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { Stack, StackProps, CfnOutput } from "aws-cdk-lib";
+import { Stack, StackProps, CfnOutput, Duration } from "aws-cdk-lib";
 
 export class AuthStack extends Stack {
   constructor(
@@ -27,20 +27,31 @@ export class AuthStack extends Stack {
       ],
     });
 
+    // Example of adding an inline policy for additional permissions
+    lambdaRole.addToPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ["quicksight:GenerateEmbedUrlForRegisteredUser"], // Example action
+        resources: ["*"], // Specify resources as needed
+      })
+    );
+
     // Define a new Lambda resource with the explicit role
     const generateDashboardUrlFunc = new lambda.Function(
       this,
       "BackendHandler",
       {
-        runtime: lambda.Runtime.NODEJS_20_X,
+        runtime: lambda.Runtime.NODEJS_18_X,
         code: lambda.Code.fromAsset("src/lambda-code/QSaccess"),
-        handler: "generateDashboardUrl.handler",
+        handler: "generateDashboardUrl.generateDashboardUrl",
         role: lambdaRole, // Use the explicitly defined role
         environment: {
+          AWS_ACC_ID: this.account,
           CLIENT_ID: userPoolClient, //the-app-clientid
           REGION: this.region,
           USER_POOL_ID: userPool.userPoolId,
         },
+        timeout: Duration.minutes(1),
       }
     );
 
