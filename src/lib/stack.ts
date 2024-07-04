@@ -7,13 +7,16 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as cloudtrail from 'aws-cdk-lib/aws-cloudtrail';
 
 export class QuickSightIntegrationStack extends cdk.Stack {
+  public readonly userPool: cognito.UserPool;
+  public readonly userPoolClientId: string;
+
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-  // ========= Create User Pool =========
-    const userPool = new cognito.UserPool(this, 'UserPool', {
+    // ========= Create User Pool =========
+    const userPool = new cognito.UserPool(this, "UserPool", {
       selfSignUpEnabled: false,
-      userPoolName: 'TenantUserPool',
+      userPoolName: "TenantUserPool",
       autoVerify: { email: true },
       standardAttributes: {
         email: {
@@ -33,21 +36,26 @@ export class QuickSightIntegrationStack extends cdk.Stack {
         email: true,
       },
     });
+    // Store the User Pool ID in the public property
+    this.userPool = userPool;
 
     const userPoolClient = new cognito.UserPoolClient(this, 'UserPoolClient', {
       userPool,
       generateSecret: false,
-      userPoolClientName: 'NuoaQuicksight',
+      userPoolClientName: "NuoaQuicksight",
       authFlows: {
         userPassword: true,
       },
     });
+    // Store the User Pool client ID in the public property
+    this.userPoolClientId = userPoolClient.userPoolClientId;
 
-  // ========= Creating Cognito Identity Pool =========
+    // ========= Creating Cognito Identity Pool =========
     // Create Identity Pool FIRST
+
     const identityPool = new cognito.CfnIdentityPool(this, 'TenantIdentityPool',
       {
-        identityPoolName: 'TenantIdentityPool',
+        identityPoolName: "TenantIdentityPool",
         allowUnauthenticatedIdentities: false,
         cognitoIdentityProviders: [
           {
@@ -60,25 +68,25 @@ export class QuickSightIntegrationStack extends cdk.Stack {
     );
 
     // Output the Identity Pool ID
-    new cdk.CfnOutput(this, 'IdentityPoolId', {
+    new cdk.CfnOutput(this, "IdentityPoolId", {
       value: identityPool.ref,
-      description: 'The ID of the Cognito Identity Pool',
+      description: "The ID of the Cognito Identity Pool",
     });
 
     // Create Roles for authenticated users
-    const nuoaAuthRole = new iam.Role(this, 'NuoaAuthRole', {
+    const nuoaAuthRole = new iam.Role(this, "NuoaAuthRole", {
       assumedBy: new iam.WebIdentityPrincipal(
-        'cognito-identity.amazonaws.com',
+        "cognito-identity.amazonaws.com",
         {
           StringEquals: {
-            'cognito-identity.amazonaws.com:aud': identityPool.ref,
+            "cognito-identity.amazonaws.com:aud": identityPool.ref,
           },
-          'ForAnyValue:StringLike': {
-            'cognito-identity.amazonaws.com:amr': 'authenticated',
+          "ForAnyValue:StringLike": {
+            "cognito-identity.amazonaws.com:amr": "authenticated",
           },
         }
       ),
-      description: 'Default role for authenticated users',
+      description: "Default role for authenticated users",
     });
 
     // Add policies for cognito operations
@@ -86,11 +94,11 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: [
-          'mobileanalytics:PutEvents',
-          'cognito-sync:*',
-          'cognito-identity:*',
+          "mobileanalytics:PutEvents",
+          "cognito-sync:*",
+          "cognito-identity:*",
         ],
-        resources: ['*'],
+        resources: ["*"],
       })
     );
     
@@ -98,16 +106,16 @@ export class QuickSightIntegrationStack extends cdk.Stack {
     nuoaAuthRole.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
-        actions: ['sts:AssumeRole'],
+        actions: ["sts:AssumeRole"],
         resources: [`arn:aws:iam::${this.account}:role/*TenantRole*`],
       })
     );
 
-  // ========= Creating lambda function =========
-    const lambdaRole = new iam.Role(this, 'NuoaLambdaExecutionRole', {
+    // ========= Creating lambda function =========
+    const lambdaRole = new iam.Role(this, "NuoaLambdaExecutionRole", {
       assumedBy: new iam.CompositePrincipal( // Use CompositePrincipal to combine principals
-        new iam.ServicePrincipal('lambda.amazonaws.com'),
-        new iam.ServicePrincipal('quicksight.amazonaws.com')
+        new iam.ServicePrincipal("lambda.amazonaws.com"),
+        new iam.ServicePrincipal("quicksight.amazonaws.com")
       ),
     });
 
@@ -159,7 +167,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
           "iam:ListAttachedRolePolicies",
           "iam:DetachRolePolicy",
         ],
-        resources: ['*'],
+        resources: ["*"],
       })
     );
 
@@ -168,22 +176,18 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: [
-          'ds:CreateIdentityPoolDirectory',
-          'ds:DescribeDirectories',
-          'ds:AuthorizeApplication',
+          "ds:CreateIdentityPoolDirectory",
+          "ds:DescribeDirectories",
+          "ds:AuthorizeApplication",
         ],
-        resources: [
-          `*`
-        ],
+        resources: [`*`],
       })
     );
 
     lambdaRole.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
-        actions: [
-          'iam:PassRole'
-        ],
+        actions: ["iam:PassRole"],
         resources: [
           `arn:aws:iam::${this.account}:role/*TenantRole`,
           `${nuoaAuthRole.roleArn}`,
@@ -195,25 +199,27 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: [
-          'cognito-identity:SetIdentityPoolRoles',
-          'cognito-identity:GetIdentityPoolRoles',
+          "cognito-identity:SetIdentityPoolRoles",
+          "cognito-identity:GetIdentityPoolRoles",
         ],
-        resources: [`*`],
+        resources: [
+          `arn:aws:cognito-identity:${this.region}:${this.account}:identitypool/*`,
+        ],
       })
     );
-    
-    new lambda.Function(this, 'QuickSightRegistrationLambda', {
+
+    new lambda.Function(this, "QuickSightRegistrationLambda", {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'quicksightRegistration.quicksightRegistration',
-      code: lambda.Code.fromAsset('src/lambda-code/registerQs'),
+      handler: "quicksightRegistration.quicksightRegistration",
+      code: lambda.Code.fromAsset("src/lambda-code/registerQs"),
       role: lambdaRole,
       environment: {
         REGION: this.region,
-        ID_TYPE: 'IAM',
+        ID_TYPE: "IAM",
         AWS_ACC_ID: this.account,
-        USER_ROLE: 'READER',
-        EMAIL: 's3938145@rmit.edu.vn',
-        QUICKSIGHT_ADMIN: 'Cookies200',
+        USER_ROLE: "READER",
+        EMAIL: "s3938145@rmit.edu.vn",
+        QUICKSIGHT_ADMIN: "Cookies200",
         IDPOOL_ID: identityPool.ref,
         USER_POOL_ID: userPool.userPoolId,
         USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
@@ -238,11 +244,15 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       timeout: cdk.Duration.minutes(1),
     });
 
-    lambdaRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'));
+    lambdaRole.addManagedPolicy(
+      iam.ManagedPolicy.fromAwsManagedPolicyName(
+        "service-role/AWSLambdaBasicExecutionRole"
+      )
+    );
 
-    const trail = new cloudtrail.Trail(this, 'CloudTrail');
+    const trail = new cloudtrail.Trail(this, "CloudTrail");
 
-    const eventRule = cloudtrail.Trail.onEvent(this, 'MyCloudWatchEvent', {
+    const eventRule = cloudtrail.Trail.onEvent(this, "MyCloudWatchEvent", {
       target: new targets.LambdaFunction(qsOnboardingFunction),
     });
 
@@ -252,14 +262,29 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       detailType: ["AWS API Call via CloudTrail"],
       detail: {
         eventSource: ["cognito-idp.amazonaws.com"],
-        eventName:["CreateGroup"]
-      }
+        eventName: ["CreateGroup"],
+      },
     });
     // Export values
-    new cdk.CfnOutput(this, 'UserPoolIdOutput', { value: userPool.userPoolId, exportName: 'UserPoolIdOutput'});
-    new cdk.CfnOutput(this, 'UserPoolClientIdOutput', { value: userPoolClient.userPoolClientId, exportName: 'UserPoolClientIdOutput'});
-    new cdk.CfnOutput(this, 'IdentityPoolIdOutput', { value: identityPool.ref , exportName: 'IdentityPoolIdOutput'});
-    new cdk.CfnOutput(this, 'NuoaAuthRoleArnOutput', { value: nuoaAuthRole.roleArn , exportName: 'NuoaAuthRoleArnOutput'});
-    new cdk.CfnOutput(this, 'QSOnboardingFunctionARN', {value: qsOnboardingFunction.functionArn, exportName: 'QSOnboardingFunctionARN'});
+    new cdk.CfnOutput(this, "UserPoolIdOutput", {
+      value: userPool.userPoolId,
+      exportName: "UserPoolIdOutput",
+    });
+    new cdk.CfnOutput(this, "UserPoolClientIdOutput", {
+      value: userPoolClient.userPoolClientId,
+      exportName: "UserPoolClientIdOutput",
+    });
+    new cdk.CfnOutput(this, "IdentityPoolIdOutput", {
+      value: identityPool.ref,
+      exportName: "IdentityPoolIdOutput",
+    });
+    new cdk.CfnOutput(this, "NuoaAuthRoleArnOutput", {
+      value: nuoaAuthRole.roleArn,
+      exportName: "NuoaAuthRoleArnOutput",
+    });
+    new cdk.CfnOutput(this, "QSOnboardingFunctionARN", {
+      value: qsOnboardingFunction.functionArn,
+      exportName: "QSOnboardingFunctionARN",
+    });
   }
 }
