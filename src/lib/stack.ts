@@ -208,24 +208,19 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       })
     );
 
-    new lambda.Function(this, "QuickSightRegistrationLambda", {
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: "quicksightRegistration.quicksightRegistration",
-      code: lambda.Code.fromAsset("src/lambda-code/registerQs"),
-      role: lambdaRole,
-      environment: {
-        REGION: this.region,
-        ID_TYPE: "IAM",
-        AWS_ACC_ID: this.account,
-        USER_ROLE: "READER",
-        EMAIL: "s3938145@rmit.edu.vn",
-        QUICKSIGHT_ADMIN: "Cookies200",
-        IDPOOL_ID: identityPool.ref,
-        USER_POOL_ID: userPool.userPoolId,
-        USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
-      },
-      timeout: cdk.Duration.minutes(1),
-    });
+    // new lambda.Function(this, "GenerateDashboardURL", {
+    //   runtime: lambda.Runtime.NODEJS_18_X,
+    //   handler: "generateDashboardUrl.generateDashboardUrl",
+    //   code: lambda.Code.fromAsset("src/lambda-code/QSaccess"),
+    //   role: lambdaRole,
+    //   environment: {
+    //     REGION: this.region,
+    //     AWS_ACC_ID: this.account,
+    //     USER_POOL_ID: userPool.userPoolId,
+    //     USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
+    //   },
+    //   timeout: cdk.Duration.minutes(1),
+    // });
 
     const qsOnboardingFunction = new lambda.Function(this, 'QuickSightOnboardingLambda', {
       runtime: lambda.Runtime.NODEJS_18_X,
@@ -235,6 +230,7 @@ export class QuickSightIntegrationStack extends cdk.Stack {
       environment: {
         REGION: this.region,
         AWS_ACC_ID: this.account,
+        QUICKSIGHT_ADMIN_ID: 'Cookies200',
         USER_POOL_ID: userPool.userPoolId,
         IDPOOL_ID: identityPool.ref,
         USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,

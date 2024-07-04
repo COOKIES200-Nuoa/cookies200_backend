@@ -47,7 +47,7 @@ export class AuthStack extends Stack {
         role: lambdaRole, // Use the explicitly defined role
         environment: {
           AWS_ACC_ID: this.account,
-          CLIENT_ID: userPoolClient, //the-app-clientid
+          USER_POOL_CLIENT_ID: userPoolClient, //the-app-clientid
           REGION: this.region,
           USER_POOL_ID: userPool.userPoolId,
         },

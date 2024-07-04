@@ -82,8 +82,9 @@ async function createTenantRole(tenantName) {
         await waitForRoleCreation(roleTenantName);
         return roleArn;
     } catch (error) {
-        if (error.Code === "EntityAlreadyExistsException") {
+        if (error.name === 'EntityAlreadyExistsException') {
             console.error("Role already exists.");
+            return `arn:aws:iam::${awsAccountId}:role/${tenantName}TenantRole`;
         } else {
             console.error("Error creating tenant role:", error);
             throw error; 
@@ -106,7 +107,20 @@ async function createRoleMapping(tenantName, tenantRoleArn) {
     const cognitoResourceId = `cognito-idp.${region}.amazonaws.com/${userPoolId}:${userPoolClientId}`;
     const existingRules = existingRoleMappings[cognitoResourceId]?.RulesConfiguration?.Rules || []; // Extract existing rules or initialize an empty array
 
-// 3. Append New Rule to Existing Rules
+// 3. Check if Rule Already Exists
+  const ruleExists = existingRules.some(rule => 
+    rule.Claim === 'cognito:groups' && 
+    rule.MatchType === 'Equals' && 
+    rule.Value === tenantName && 
+    rule.RoleARN === tenantRoleArn
+  );
+
+  if (ruleExists) {
+    console.log('Rule already exists, skipping creation.');
+    return; // Exit the function early
+  }
+
+// 4. Append New Rule to Existing Rules
     existingRules.push({
         Claim: 'cognito:groups',
         MatchType: 'Equals',

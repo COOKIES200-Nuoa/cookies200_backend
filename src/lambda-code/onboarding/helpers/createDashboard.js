@@ -11,6 +11,7 @@ const { createQuickSightResource } = require('./createResource');
 const region = process.env.REGION;
 const awsAccountId = process.env.AWS_ACC_ID;
 const datasetId = process.env.DATASET;
+const adminId = process.env.QUICKSIGHT_ADMIN_ID;
 
 const createNamespace = createQuickSightResource('Namespace', CreateNamespaceCommand);
 const createTemplate = createQuickSightResource('Template ', CreateTemplateCommand);
@@ -68,7 +69,7 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
         Definition: minimalTemplateDefinition,
         Permissions: [
             {
-                Principal: `arn:aws:quicksight:${region}:${awsAccountId}:namespace/default`,
+                Principal: `arn:aws:quicksight:${region}:${awsAccountId}:user/default/${adminId}`,
                 Actions: [
                     "quicksight:DescribeTemplate", 
                     "quicksight:DescribeTemplateAlias", 
@@ -97,7 +98,7 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
         },
         Permissions: [
             {
-                Principal: `arn:aws:quicksight:${region}:${awsAccountId}:namespace/default`,
+                Principal: `arn:aws:quicksight:${region}:${awsAccountId}:user/default/${adminId}`,
                 Actions: [
                     "quicksight:RestoreAnalysis", 
                     "quicksight:UpdateAnalysisPermissions", 
@@ -133,7 +134,7 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
         Permissions: [
             {
                 // Grant permissions to admin
-                Principal: `arn:aws:quicksight:${region}:${awsAccountId}:namespace/default`,
+                Principal: `arn:aws:quicksight:${region}:${awsAccountId}:user/default/${adminId}`,
                 Actions: [
                     "quicksight:DescribeDashboard", 
                     "quicksight:ListDashboardVersions", 
