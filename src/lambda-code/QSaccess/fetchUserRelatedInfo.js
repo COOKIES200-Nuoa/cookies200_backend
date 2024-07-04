@@ -56,11 +56,6 @@ function getCognitoUserGroups(accessToken) {
   }
 }
 
-/**
- * Generate QuickSight embedded URL for the user dashboard
- * @param {string} userEmail
- */
-
 async function generateQuickSightURL(accessToken) {
   const userGroup = await getCognitoUserGroups(accessToken);
   console.log("Usergroup: ", userGroup);
