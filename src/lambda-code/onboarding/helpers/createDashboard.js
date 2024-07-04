@@ -10,7 +10,6 @@ const { createQuickSightResource } = require('./createResource');
 
 const region = process.env.REGION;
 const awsAccountId = process.env.AWS_ACC_ID;
-const adminId = process.env.QUICKSIGHT_ADMIN;
 const datasetId = process.env.DATASET;
 
 const createNamespace = createQuickSightResource('Namespace', CreateNamespaceCommand);
@@ -98,7 +97,7 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
         },
         Permissions: [
             {
-                Principal: `arn:aws:quicksight:${region}:${awsAccountId}:user/default/${adminId}`,
+                Principal: `arn:aws:quicksight:${region}:${awsAccountId}:namespace/default`,
                 Actions: [
                     "quicksight:RestoreAnalysis", 
                     "quicksight:UpdateAnalysisPermissions", 
@@ -134,7 +133,7 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
         Permissions: [
             {
                 // Grant permissions to admin
-                Principal: `arn:aws:quicksight:${region}:${awsAccountId}:user/default/${adminId}`,
+                Principal: `arn:aws:quicksight:${region}:${awsAccountId}:namespace/default`,
                 Actions: [
                     "quicksight:DescribeDashboard", 
                     "quicksight:ListDashboardVersions", 

@@ -1,4 +1,3 @@
-const { CognitoIdentityProviderClient } = require("@aws-sdk/client-cognito-identity-provider"); 
 const  { IAMClient, CreateRoleCommand, PutRolePolicyCommand, GetRoleCommand } = require ("@aws-sdk/client-iam");
 const { CognitoIdentityClient, SetIdentityPoolRolesCommand, GetIdentityPoolRolesCommand } = require ("@aws-sdk/client-cognito-identity");
 
@@ -9,7 +8,6 @@ const nuoaAuthRoleArn = process.env.AUTH_ROLE_ARN;
 const identityPoolId = process.env.IDPOOL_ID;
 const userPoolClientId = process.env.USER_POOL_CLIENT_ID;
 
-const cognitoClient = new CognitoIdentityProviderClient({ region: region });
 const iamClient = new IAMClient({ region: region });
 const cognitoIdentityClient = new CognitoIdentityClient({ region: region});
 
@@ -20,45 +18,46 @@ async function createTenant(tenantName) {
     return tenantRoleArn;
 };
 
+
 async function createTenantRole(tenantName) {
     const roleTenantName = `${tenantName}TenantRole`;
-        // Construct the assume role policy document as an object
-        const assumeRolePolicyDocument = {
-            Version: "2012-10-17",
-            Statement: [
-                {
-                    Effect: "Allow",
-                    Principal: {
-                        AWS: nuoaAuthRoleArn,
-                    },
-                    Action: "sts:AssumeRole",
-                    Condition: {
-                        StringEquals: {
-                            "sts:ExternalId": tenantName,
-                        },
+    // Construct the assume role policy document as an object
+    const assumeRolePolicyDocument = {
+        Version: "2012-10-17",
+        Statement: [
+            {
+                Effect: "Allow",
+                Principal: {
+                    AWS: nuoaAuthRoleArn,
+                },
+                Action: "sts:AssumeRole",
+                Condition: {
+                    StringEquals: {
+                        "sts:ExternalId": tenantName,
                     },
                 },
-            ],
-        };
+            },
+        ],
+    };
 
-        // Add permissions to the role (policy document as an object)
-        const rolePolicyName = `${roleTenantName}Policy`;
-        const policyDocument = {
-            Version: "2012-10-17",
-            Statement: [
-                {
-                    Effect: "Allow",
-                    Action: [
-                        "quicksight:DescribeDashboard",
-                        "quicksight:ListDashboards",
-                        "quicksight:GetDashboardEmbedUrl",
-                        "quicksight:GenerateEmbedUrlForRegisteredUser",
-                        "quicksight:RegisterUser",
-                    ],
-                    Resource: [`arn:aws:quicksight:${region}:${awsAccountId}:namespace/${tenantName}`], 
-                },
-            ],
-        };
+    // Add permissions to the role (policy document as an object)
+    const rolePolicyName = `${roleTenantName}Policy`;
+    const policyDocument = {
+        Version: "2012-10-17",
+        Statement: [
+            {
+                Effect: "Allow",
+                Action: [
+                    "quicksight:DescribeDashboard",
+                    "quicksight:ListDashboards",
+                    "quicksight:GetDashboardEmbedUrl",
+                    "quicksight:GenerateEmbedUrlForRegisteredUser",
+                    "quicksight:RegisterUser",
+                ],
+                Resource: [`arn:aws:quicksight:${region}:${awsAccountId}:namespace/${tenantName}`], 
+            },
+        ],
+    };
 
     try {
         const createRoleCommnand = new CreateRoleCommand({
@@ -83,7 +82,7 @@ async function createTenantRole(tenantName) {
         await waitForRoleCreation(roleTenantName);
         return roleArn;
     } catch (error) {
-        if (error.Code === "EntityAlreadyExists") {
+        if (error.Code === "EntityAlreadyExistsException") {
             console.error("Role already exists.");
         } else {
             console.error("Error creating tenant role:", error);
@@ -92,6 +91,7 @@ async function createTenantRole(tenantName) {
     }
 };
 
+// 
 async function createRoleMapping(tenantName, tenantRoleArn) {
     console.log('Inside createRoleMapping: tenantRoleArn: ', tenantRoleArn);
 
@@ -152,7 +152,6 @@ async function createRoleMapping(tenantName, tenantRoleArn) {
         }
     }
 };
-module.exports = { createTenant };
 
 async function waitForRoleCreation(roleName, retryDelay = 2000, maxRetries = 10) {
     let retries = 0;
@@ -164,11 +163,16 @@ async function waitForRoleCreation(roleName, retryDelay = 2000, maxRetries = 10)
         } catch (error) {
             if (error.Code === "NoSuchEntity") {
                 retries++;
-                await new Promise(resolve => setTimeout(resolve, retryDelay));
+                await new Promise(resolve => setTimeout(resolve, retryDelay)); // Retry after delay
+            } else if (error.Code === 'EntityAlreadyExistsException') {
+                console.log('Role already exists');
+                return;
             } else {
                 throw error;
             }
         }
     }
     throw new Error(`Role creation timed out after ${maxRetries} retries`);
-}
+};
+
+module.exports = { createTenant };
