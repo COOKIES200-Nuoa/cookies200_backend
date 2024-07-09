@@ -2,13 +2,29 @@
 import "source-map-support/register";
 import * as cdk from "aws-cdk-lib";
 import { AuthStack } from "../src/lib/auth_stack";
-import { QuickSightIntegrationStack } from "../src/lib/stack";
+import { CognitoStack } from "../src/lib/cognito_stack";
+import { QuickSightOnboardingStack } from "../src/lib/onboarding_stack";
 
 const app = new cdk.App();
 
-const qsIntegrationStack = new QuickSightIntegrationStack(
+const cognitoStack = new CognitoStack(
   app,
-  "QuickSightIntegrationStack",
+  "CognitoStack",
+  {
+    env: {
+      account: process.env.CDK_DEFAULT_ACCOUNT,
+      region: process.env.CDK_DEFAULT_REGION,
+    },
+  }
+);
+
+const onboardingStack = new QuickSightOnboardingStack(
+  app, 
+  "OnboardingStack",
+  cognitoStack.userPool,
+  cognitoStack.userPoolClientId,
+  cognitoStack.nuoaAuthRoleARN,
+  cognitoStack.identityPoolId,
   {
     env: {
       account: process.env.CDK_DEFAULT_ACCOUNT,
@@ -19,8 +35,9 @@ const qsIntegrationStack = new QuickSightIntegrationStack(
 
 const authStack = new AuthStack(
   app,
-  "AuthStack", qsIntegrationStack.userPool,
-  qsIntegrationStack.userPoolClientId,
+  "AuthStack", 
+  cognitoStack.userPool,
+  cognitoStack.userPoolClientId,
   {
     env: {
       account: process.env.CDK_DEFAULT_ACCOUNT,
