@@ -60,10 +60,21 @@ export class CognitoStack extends Stack {
         callbackUrls: ['https://dummy'], // Placeholder URL
         logoutUrls: ['https://dummy']
       },
-      // generateSecret: false,
-      // authFlows: {
-      //   userPassword: true,
-      // },
+      generateSecret: false,
+      authFlows: {
+        userPassword: true,
+        adminUserPassword: true,
+        userSrp: true,
+      },
+    });
+
+    // Construct the Provider URL
+    const providerUrl = `https://cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}`;
+
+    // Create the OIDC Identity Provider
+    const oidcProvider = new iam.OpenIdConnectProvider(this, 'CognitoOIDCProvider', {
+      url: providerUrl,
+      clientIds: [userPoolClient.userPoolClientId],
     });
 
     // ========= Creating Cognito Identity Pool =========
