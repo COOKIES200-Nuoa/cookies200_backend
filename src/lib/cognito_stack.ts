@@ -14,7 +14,7 @@ export class CognitoStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    // ========= Create User Pool =========
+  // ========= Create User Pool =========
     const userPool = new cognito.UserPool(this, "UserPool", {
       selfSignUpEnabled: false,
       userPoolName: "TenantUserPool",
@@ -68,18 +68,16 @@ export class CognitoStack extends Stack {
       },
     });
 
+  // ========= Creating Create the OIDC Identity Provider =========
     // Construct the Provider URL
     const providerUrl = `https://cognito-idp.${this.region}.amazonaws.com/${userPool.userPoolId}`;
-
-    // Create the OIDC Identity Provider
+    
     const oidcProvider = new iam.OpenIdConnectProvider(this, 'CognitoOIDCProvider', {
       url: providerUrl,
       clientIds: [userPoolClient.userPoolClientId],
     });
 
-    // ========= Creating Cognito Identity Pool =========
-    // Create Identity Pool FIRST
-
+  // ========= Creating Cognito Identity Pool =========
     const identityPool = new cognito.CfnIdentityPool(this, 'TenantIdentityPool',
       {
         identityPoolName: "TenantIdentityPool",

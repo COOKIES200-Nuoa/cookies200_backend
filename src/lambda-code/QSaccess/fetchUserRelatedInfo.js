@@ -60,12 +60,24 @@ async function generateQuickSightURL(accessToken) {
   const userGroup = await getCognitoUserGroups(accessToken);
   console.log("Usergroup: ", userGroup);
   
-  //arn:aws:quicksight:ap-southeast-1:891377270638:user/TenantK/TenantKTenantRole/TenantK
   const userArn = `arn:aws:quicksight:${AWS_REGION}:${AWS_ACC_ID}:user/${userGroup}/${userGroup}TenantRole/${userGroup}`;
 
-  const experienceConfiguration = {
+  const dashboardId = `${userGroup}-dashboard`
+
+  const dashboardExperienceConfiguration = {
     Dashboard: {
-      InitialDashboardId: `${userGroup}-dashboard`,
+      InitialDashboardId: dashboardId,
+    },
+  };
+
+  const consoleExperienceConfiguration = {
+      QuickSightConsole: { 
+        FeatureConfigurations: { 
+          StatePersistence: { 
+              Enabled: true
+          }
+        },
+        InitialPath: `/dashboards/${dashboardId}`,
     },
   };
 
@@ -73,7 +85,7 @@ async function generateQuickSightURL(accessToken) {
     AwsAccountId: AWS_ACC_ID,
     UserArn: userArn,
     // SessionLifetimeInMinutes: 100,  // Adjust as necessary within the allowed range
-    ExperienceConfiguration: experienceConfiguration,
+    ExperienceConfiguration: consoleExperienceConfiguration,
   };
 
   try {
