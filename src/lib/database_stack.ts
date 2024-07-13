@@ -1,4 +1,4 @@
-import { Stack, StackProps, Duration } from 'aws-cdk-lib';
+import { Stack, StackProps } from 'aws-cdk-lib';
 import { aws_lambda as lambda } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
@@ -10,23 +10,21 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as kinesis from 'aws-cdk-lib/aws-kinesis';
 import * as lambdaEventSources from 'aws-cdk-lib/aws-lambda-event-sources';
 
-// import * as quicksight from 'aws-cdk-lib/aws-quicksight'; 
-
 export class DataPipelineStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
     // Assume the DynamoDB tables already exist
     const activityTable = dynamodb.Table.fromTableAttributes(this, 'ActivityTable', {
-      tableName: 'ActivityTable', 
+      tableName: 'ActivityTable',
     });
-  
+
     const entityTable = dynamodb.Table.fromTableAttributes(this, 'EntityTable', {
-      tableName: 'EntityTable', 
+      tableName: 'EntityTable',
     });
-  
+
     const entityStructure = dynamodb.Table.fromTableAttributes(this, 'EntityStructure', {
-      tableName: 'EntityStructure', 
+      tableName: 'EntityStructure',
     });
 
     // S3 Buckets
@@ -36,20 +34,24 @@ export class DataPipelineStack extends Stack {
     // IAM Role for Glue
     const glueRole = new iam.Role(this, 'GlueRole', {
       assumedBy: new iam.ServicePrincipal('glue.amazonaws.com'),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSGlueServiceRole'),
+        iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3FullAccess')
+      ]
     });
-
-    glueRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSGlueServiceRole'));
 
     // Glue Job
     const glueJob = new glue.CfnJob(this, 'GlueJob', {
       role: glueRole.roleArn,
       command: {
         name: 'gluepipeline',
-        scriptLocation: 's3://path-to-glue-script/glue-script.py',
+        scriptLocation: 's3://glue-scripts-bucket/glue-script.py',
       },
       defaultArguments: {
         '--TempDir': rawDataBucket.s3UrlForObject(),
         '--job-bookmark-option': 'job-bookmark-enable',
+        '--INPUT_PATH': rawDataBucket.s3UrlForObject('input/'),
+        '--OUTPUT_PATH': processedDataBucket.s3UrlForObject('output/'),
       },
       glueVersion: '2.0',
     });
@@ -64,19 +66,6 @@ export class DataPipelineStack extends Stack {
       },
     });
 
-    // QuickSight Setup (Optional - Example only)
-    /*
-    const quicksightUser = new quicksight.CfnUser(this, 'QuickSightUser', {
-      email: 'your-email@example.com',
-      identityType: 'IAM',
-      awsAccountId: this.account,
-      namespace: 'default',
-      userRole: 'READER',
-      iamArn: glueRole.roleArn,
-    });
-    */
-
-    ////////// Pipeline
     // Kinesis Data Stream
     const kinesisStream = new kinesis.Stream(this, 'KinesisStream');
 
@@ -115,7 +104,7 @@ export class DataPipelineStack extends Stack {
     const s3ToKinesisLambda = new lambda.Function(this, 'S3ToKinesisLambda', {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 's3ToKinesis.handler',
-      code: lambda.Code.fromAsset('src/lambda-code/s3-to-kinesis'),
+      code: lambda.Code.fromAsset('src/lambda-code/dtbpipeline'),
       environment: {
         KINESIS_STREAM_NAME: kinesisStream.streamName,
       },
@@ -134,10 +123,9 @@ export class DataPipelineStack extends Stack {
 
     // S3 Notification to trigger the S3 to Kinesis Lambda
     rawDataBucket.addEventNotification(s3.EventType.OBJECT_CREATED, new s3n.LambdaDestination(s3ToKinesisLambda));
-  
 
-     // Lambda Function to refresh QuickSight dataset
-     const refreshLambda = new lambda.Function(this, 'RefreshLambda', {
+    // Lambda Function to refresh QuickSight dataset
+    const refreshLambda = new lambda.Function(this, 'RefreshLambda', {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'refreshLambda.handler',
       code: lambda.Code.fromAsset('src/lambda-code/dtbpipeline'),
@@ -148,7 +136,6 @@ export class DataPipelineStack extends Stack {
       },
     });
 
-    //----------------- Refresh Lambda-----------------//
     // Grant necessary permissions to the Lambda function
     refreshLambda.addToRolePolicy(new iam.PolicyStatement({
       actions: [
@@ -162,5 +149,27 @@ export class DataPipelineStack extends Stack {
     // S3 Notification to trigger Lambda
     rawDataBucket.addEventNotification(s3.EventType.OBJECT_CREATED, new s3n.LambdaDestination(refreshLambda));
 
+    // Lambda function to trigger Glue job
+    const glueTriggerLambda = new lambda.Function(this, 'GlueTriggerLambda', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'glueTrigger.handler',
+      code: lambda.Code.fromAsset('src/lambda-code/dtbpipeline'),
+      environment: {
+        GLUE_JOB_NAME: glueJob.ref,
+      },
+    });
+
+    // Grant necessary permissions to the Lambda function
+    glueTriggerLambda.addToRolePolicy(new iam.PolicyStatement({
+      actions: [
+        'glue:StartJobRun',
+      ],
+      resources: [
+        `arn:aws:glue:${this.region}:${this.account}:job/${glueJob.ref}`,
+      ],
+    }));
+
+    // S3 Notification to trigger the Glue trigger Lambda
+    rawDataBucket.addEventNotification(s3.EventType.OBJECT_CREATED, new s3n.LambdaDestination(glueTriggerLambda));
   }
 }
