@@ -17,34 +17,14 @@ export class AuthStack extends Stack {
   ) {
     super(scope, id, props);
 
-    // Define the IAM role for the Lambda function
-    const lambdaRole = new iam.Role(this, "LambdaExecutionRole", {
-      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
-      managedPolicies: [
-        iam.ManagedPolicy.fromAwsManagedPolicyName(
-          "service-role/AWSLambdaBasicExecutionRole"
-        ),
-      ],
-    });
-
-    // Example of adding an inline policy for additional permissions
-    lambdaRole.addToPolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ["quicksight:GenerateEmbedUrlForRegisteredUser"], // Example action
-        resources: ["*"], // Specify resources as needed
-      })
-    );
-
     // Define a new Lambda resource with the explicit role
-    const generateDashboardUrlFunc = new lambda.Function(
+    const loginFunc = new lambda.Function(
       this,
       "BackendHandler",
       {
         runtime: lambda.Runtime.NODEJS_18_X,
         code: lambda.Code.fromAsset("src/lambda-code/QSaccess"),
-        handler: "generateDashboardUrl.generateDashboardUrl",
-        role: lambdaRole, // Use the explicitly defined role
+        handler: "authenticateUserAndFetchToken.authenticateUserAndFetchToken",
         environment: {
           AWS_ACC_ID: this.account,
           USER_POOL_CLIENT_ID: userPoolClient, //the-app-clientid
@@ -55,23 +35,21 @@ export class AuthStack extends Stack {
       }
     );
 
+    // Grant permissions to the Lambda function
+    loginFunc.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['cognito-idp:InitiateAuth'],
+      resources: [userPool.userPoolArn]
+    }));
+
     // Define the API Gateway
     const api = new apigateway.RestApi(this, "UserApi", {
       restApiName: "Login API",
       description: "API to handle user login and return dashboard URL",
     });
 
-    const authorizer = new apigateway.CognitoUserPoolsAuthorizer(
-      this,
-      "UserAuthorizer",
-      {
-        cognitoUserPools: [userPool],
-      }
-    );
-
     // Lambda Integration
     const lambdaIntegration = new apigateway.LambdaIntegration(
-      generateDashboardUrlFunc,
+      loginFunc,
       {
         requestTemplates: { "application/json": '{ "statusCode": "200" }' },
       }
@@ -79,9 +57,7 @@ export class AuthStack extends Stack {
 
     // Define a new resource and method with Cognito Authorizer
     const loginResource = api.root.addResource("login");
-    loginResource.addMethod("POST", lambdaIntegration, {
-      authorizer: authorizer,
-    });
+    loginResource.addMethod("POST", lambdaIntegration);
 
     // Output API Gateway Endpoint
     new CfnOutput(this, "LoginApiUrl", {

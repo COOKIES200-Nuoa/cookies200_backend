@@ -1,6 +1,13 @@
 const jwt = require("jsonwebtoken");
-const {CognitoIdentityProviderClient, InitiateAuthCommand} = require('@aws-sdk/client-cognito-identity-provider');
-const {QuickSightClient, GenerateEmbedUrlForRegisteredUserCommand} = require('@aws-sdk/client-quicksight');
+const {
+  CognitoIdentityProviderClient,
+  InitiateAuthCommand,
+} = require("@aws-sdk/client-cognito-identity-provider");
+const {
+  QuickSightClient,
+  GenerateEmbedUrlForRegisteredUserCommand,
+} = require("@aws-sdk/client-quicksight");
+const { error } = require("console");
 
 const USER_POOL_ID = process.env.USER_POOL_ID;
 const CLIENT_ID = process.env.USER_POOL_CLIENT_ID;
@@ -17,7 +24,7 @@ const quicksight = new QuickSightClient();
 async function authUserToFetchAccessToken(username, password) {
   const params = {
     AuthFlow: "USER_PASSWORD_AUTH",
-    ClientId: CLIENT_ID, //app-client-id?
+    ClientId: CLIENT_ID,
     UserPoolId: USER_POOL_ID,
     AuthParameters: {
       USERNAME: username,
@@ -29,10 +36,12 @@ async function authUserToFetchAccessToken(username, password) {
     const command = new InitiateAuthCommand(params);
     const response = await cognito.send(command);
     const accessToken = response.AuthenticationResult.AccessToken;
-    return accessToken;
+    const idToken = response.AuthenticationResult.IdToken;
+    const refreshToken = response.AuthenticationResult.RefreshToken;
+    return { accessToken, idToken, refreshToken };
   } catch (error) {
     console.error("Authentication error:", error);
-    throw new Error("Authentication failed");
+    throw new Error(`Authentication failed: ${error}`);
   }
 }
 
@@ -47,22 +56,22 @@ function getCognitoUserGroups(accessToken) {
     const decodedToken = jwt.decode(accessToken);
     const groups = decodedToken["cognito:groups"] || []; // Returns an empty array if no groups are found
     if (!groups || groups.length === 0) {
-      throw new Error("No group found in the access token. ");
+      throw new Error(`No group found in the access token ${error}`);
     }
     return groups[0];
   } catch (error) {
     console.error("Failed to decode token:", error);
-    throw new Error("Invalid token");
+    throw new Error(`Invalid token ${error}`);
   }
 }
 
 async function generateQuickSightURL(accessToken) {
   const userGroup = await getCognitoUserGroups(accessToken);
   console.log("Usergroup: ", userGroup);
-  
+
   const userArn = `arn:aws:quicksight:${AWS_REGION}:${AWS_ACC_ID}:user/${userGroup}/${userGroup}TenantRole/${userGroup}`;
 
-  const dashboardId = `${userGroup}-dashboard`
+  const dashboardId = `${userGroup}-dashboard`;
 
   const dashboardExperienceConfiguration = {
     Dashboard: {
@@ -71,13 +80,13 @@ async function generateQuickSightURL(accessToken) {
   };
 
   const consoleExperienceConfiguration = {
-      QuickSightConsole: { 
-        FeatureConfigurations: { 
-          StatePersistence: { 
-              Enabled: true
-          }
+    QuickSightConsole: {
+      FeatureConfigurations: {
+        StatePersistence: {
+          Enabled: true,
         },
-        InitialPath: `/dashboards/${dashboardId}`,
+      },
+      InitialPath: `/dashboards/${dashboardId}`,
     },
   };
 
@@ -94,7 +103,7 @@ async function generateQuickSightURL(accessToken) {
     return response.EmbedUrl;
   } catch (error) {
     console.error("Error generating QuickSight URL:", error);
-    throw new Error("Failed to generate QuickSight URL");
+    throw new Error(error);
   }
 }
 
