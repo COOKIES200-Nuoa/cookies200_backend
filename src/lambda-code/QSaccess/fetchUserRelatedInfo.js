@@ -1,7 +1,6 @@
 const jwt = require("jsonwebtoken");
 const {
   CognitoIdentityProviderClient,
-  InitiateAuthCommand,
 } = require("@aws-sdk/client-cognito-identity-provider");
 const {
   QuickSightClient,
@@ -16,34 +15,6 @@ const AWS_REGION = process.env.AWS_REGION;
 
 const cognito = new CognitoIdentityProviderClient();
 const quicksight = new QuickSightClient();
-/**
- * Authenticate user with Cognito and get user details
- * @param {string} username
- * @param {string} password
- */
-async function authUserToFetchAccessToken(username, password) {
-  const params = {
-    AuthFlow: "USER_PASSWORD_AUTH",
-    ClientId: CLIENT_ID,
-    UserPoolId: USER_POOL_ID,
-    AuthParameters: {
-      USERNAME: username,
-      PASSWORD: password,
-    },
-  };
-
-  try {
-    const command = new InitiateAuthCommand(params);
-    const response = await cognito.send(command);
-    const accessToken = response.AuthenticationResult.AccessToken;
-    const idToken = response.AuthenticationResult.IdToken;
-    const refreshToken = response.AuthenticationResult.RefreshToken;
-    return { accessToken, idToken, refreshToken };
-  } catch (error) {
-    console.error("Authentication error:", error);
-    throw new Error(`Authentication failed: ${error}`);
-  }
-}
 
 /**
  * Get user's email from Cognito using access token
