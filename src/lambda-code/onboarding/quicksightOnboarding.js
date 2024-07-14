@@ -1,5 +1,5 @@
-const { createQSDashboard } = require('./helpers/createDashboard');
-const { createTenant } = require('./helpers/createTenant');
+const { createQSDashboard } = require('./helpers/createDashboard/createDashboard');
+const { createTenant } = require('./helpers/createTenant/createTenant');
 
 exports.quicksightOnboarding = async (event) => {
     const tenant = event.detail.requestParameters.groupName;
