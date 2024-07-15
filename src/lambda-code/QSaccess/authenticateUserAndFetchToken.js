@@ -4,6 +4,11 @@ const {
   InitiateAuthCommand,
   RespondToAuthChallengeCommand,
 } = require("@aws-sdk/client-cognito-identity-provider");
+const {
+  QuickSightClient,
+  GenerateEmbedUrlForRegisteredUserCommand,
+} = require("@aws-sdk/client-quicksight");
+const { error } = require("console");
 
 const USER_POOL_ID = process.env.USER_POOL_ID;
 const CLIENT_ID = process.env.USER_POOL_CLIENT_ID;
@@ -30,6 +35,12 @@ exports.authenticateUserAndFetchToken = async (event) => {
       if (!newPassword) {
         return {
           statusCode: 400,
+          headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Methods': '*',
+        'Access-Control-Allow-Origin': '*'
+          },
           body: JSON.stringify({
             message: "New password required.",
             challengeName: command.ChallengeName,
@@ -53,6 +64,12 @@ exports.authenticateUserAndFetchToken = async (event) => {
         const responseAuthChallenge = await cognito.send(commandAuthChallange);
         return {
           statusCode: 200,
+          headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Methods': '*',
+        'Access-Control-Allow-Origin': '*'
+          },
           body: JSON.stringify({
             message: "Password changed successfully!",
             tokens: responseAuthChallenge.AuthenticationResult
@@ -63,16 +80,28 @@ exports.authenticateUserAndFetchToken = async (event) => {
 
     return {
       statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Methods': '*',
+        'Access-Control-Allow-Origin': '*'
+          },
       body: JSON.stringify({
         message: "Authentication successful!",
         tokens: responseInitiateAuth.AuthenticationResult
       }),
     };
-
+    
   } catch (error) {
     console.error("Error during authentication:", error);
     return {
       statusCode: 400,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Methods': '*',
+        'Access-Control-Allow-Origin': '*'
+          },
       body: JSON.stringify({
         message: "Authentication failed",
         error: error.message,
