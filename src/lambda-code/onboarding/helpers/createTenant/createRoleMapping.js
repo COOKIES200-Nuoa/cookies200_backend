@@ -66,13 +66,14 @@ async function createRoleMapping(tenantName, tenantRoleArn) {
         const response = await cognitoIdentityClient.send(command);
         console.log("Identity Pool roles configured successfully:", response);
     } catch (error) {
-        if (error.Code === 'InvalidParameterException') {
+        console.log('Error:', error.message);
+        if (error.name === 'InvalidParameterException') {
             console.error("Invalid parameters:", error.message);
             throw error;
-        } else if (error.Code === 'ResourceNotFoundException') {
+        } else if (error.name === 'ResourceNotFoundException') {
             console.error("Identity pool or role not found:", error.message);
             throw error;
-        } else if (error.Code === 'NotAuthorizedException') {
+        } else if (error.name === 'NotAuthorizedException') {
             console.error("Not authorized to perform this action:", error.message);
             throw error;
         } else {

@@ -55,7 +55,9 @@ async function createTenantRole(tenantName) {
             AssumeRolePolicyDocument:JSON.stringify(assumeRolePolicyDocument),
             Description: `Role for ${tenantName}`,
         });
+
         const createRoleResponse = await iamClient.send(createRoleCommnand);
+        console.log('createRoleResponse: ', createRoleResponse);
         const roleArn = createRoleResponse.Role.Arn;
 
         console.log(`Role created: ${roleArn}`);
