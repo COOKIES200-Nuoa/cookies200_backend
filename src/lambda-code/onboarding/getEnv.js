@@ -5,6 +5,8 @@ const getEnv = () => ({
     nuoaAuthRoleArn: process.env.AUTH_ROLE_ARN,
     identityPoolId: process.env.IDPOOL_ID,
     userPoolClientId: process.env.USER_POOL_CLIENT_ID,
+    datasetId: process.env.DATASET,
+    adminId: process.env.QUICKSIGHT_ADMIN_ID,
 });
 
 module.exports = { getEnv };

@@ -13,7 +13,7 @@ const quickSightClient = new QuickSightClient({ region: region });
 function createQuickSightResource(resourceType, createCommandConstructor) {
     return async function (resourceParams) {
       const command = new createCommandConstructor(resourceParams);
-  
+
       try {
         const response = await quickSightClient.send(command);
         
@@ -95,10 +95,9 @@ async function waitForQuickSightOperation(
 
         const response = await quickSightClient.send(command);
         const status = statusPath.split('.').reduce((obj, key) => obj[key], response);
-
         if (desiredStatuses.includes(status)) {
             return response;
-        } else if (status.endsWith("FAILED") || status === 'NON_RETRYABLE_FAILURE') {
+        } else if (status === ("CREATION_FAILED") || status === 'NON_RETRYABLE_FAILURE') {
             throw new Error(`Operation failed with status: ${status}`);
         }
 

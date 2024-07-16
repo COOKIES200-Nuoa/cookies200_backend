@@ -5,10 +5,9 @@ import {
     InvalidParameterException, 
     ResourceNotFoundException, 
     NotAuthorizedException, 
-    RoleMapping,
     GetIdentityPoolRolesCommandOutput
 } from '@aws-sdk/client-cognito-identity';
-import { mockClient, AwsError } from 'aws-sdk-client-mock';
+import { mockClient } from 'aws-sdk-client-mock';
 
 const { createRoleMapping } = require ('../src/lambda-code/onboarding/helpers/createTenant/createRoleMapping');
 const { getEnv } = require ('../src/lambda-code/onboarding/getEnv');

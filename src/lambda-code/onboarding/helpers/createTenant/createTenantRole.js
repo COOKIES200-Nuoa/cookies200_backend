@@ -84,8 +84,6 @@ async function createTenantRole(tenantName) {
     }
 };
 
-module.exports = { createTenantRole };
-
 async function waitForRoleCreation(roleName, retryDelay = 2000, maxRetries = 10) {
     let retries = 0;
     while (retries < maxRetries) {
@@ -94,10 +92,10 @@ async function waitForRoleCreation(roleName, retryDelay = 2000, maxRetries = 10)
             await iamClient.send(command); 
             return; 
         } catch (error) {
-            if (error.Code === "NoSuchEntity") {
+            if (error.name === "NoSuchEntityException") {
                 retries++;
                 await new Promise(resolve => setTimeout(resolve, retryDelay)); // Retry after delay
-            } else if (error.Code === 'EntityAlreadyExistsException') {
+            } else if (error.name === 'EntityAlreadyExistsException') {
                 console.log('Role already exists');
                 return;
             } else {
@@ -107,3 +105,5 @@ async function waitForRoleCreation(roleName, retryDelay = 2000, maxRetries = 10)
     }
     throw new Error(`Role creation timed out after ${maxRetries} retries`);
 };
+
+module.exports = { createTenantRole, waitForRoleCreation };
