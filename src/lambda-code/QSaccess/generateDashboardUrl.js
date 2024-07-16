@@ -1,14 +1,30 @@
-const {authUserToFetchAccessToken, generateQuickSightURL} = require('./fetchUserRelatedInfo')
+const { generateQuickSightURL } = require("./fetchUserRelatedInfo");
 
 exports.generateDashboardUrl = async (event) => {
   try {
-    const username = event.username;
-    const password = event.password;
+    const authorizationHeader =
+      event.headers.authorization || event.headers.Authorization;
 
-    // Authenticate user
-    const accessToken = await authUserToFetchAccessToken(username, password);
-    console.log("Access Token: ", accessToken);
+    if (!authorizationHeader) {
+      return {
+        statusCode: 401,
+        body: JSON.stringify({ message: "Missing Authorization header" }),
+      };
+    }
 
+    // Check if the header follows the Bearer <token> format
+    const tokenParts = authorizationHeader.split(" ");
+    if (tokenParts[0] !== "Bearer" || tokenParts.length !== 2) {
+      return {
+        statusCode: 401,
+        body: JSON.stringify({
+          message: "Invalid Authorization header format",
+        }),
+      };
+    }
+
+    // Extract the token
+    const accessToken = tokenParts[1];
     // Generate QuickSight embedded URL
     const embedUrl = await generateQuickSightURL(accessToken);
     console.log("Quicksight Embeded URL: ", embedUrl);
@@ -17,7 +33,7 @@ exports.generateDashboardUrl = async (event) => {
       statusCode: 200,
       body: JSON.stringify({
         message: "Lambda execution successful!",
-        embedUrl: embedUrl
+        embedUrl: embedUrl,
       }),
     };
   } catch (error) {

@@ -2,24 +2,21 @@
 import "source-map-support/register";
 import * as cdk from "aws-cdk-lib";
 import { AuthStack } from "../src/lib/auth_stack";
+import { GenerateQSUrlStack } from "../src/lib/generateQSUrl_stack";
 import { CognitoStack } from "../src/lib/cognito_stack";
 import { QuickSightOnboardingStack } from "../src/lib/onboarding_stack";
 
 const app = new cdk.App();
 
-const cognitoStack = new CognitoStack(
-  app,
-  "CognitoStack",
-  {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
-  }
-);
+const cognitoStack = new CognitoStack(app, "CognitoStack", {
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: process.env.CDK_DEFAULT_REGION,
+  },
+});
 
 const onboardingStack = new QuickSightOnboardingStack(
-  app, 
+  app,
   "OnboardingStack",
   cognitoStack.userPool,
   cognitoStack.userPoolClientId,
@@ -35,7 +32,7 @@ const onboardingStack = new QuickSightOnboardingStack(
 
 const authStack = new AuthStack(
   app,
-  "AuthStack", 
+  "AuthStack",
   cognitoStack.userPool,
   cognitoStack.userPoolClientId,
   {
@@ -45,4 +42,18 @@ const authStack = new AuthStack(
     },
   }
 );
+
+const generateQSUrlStack = new GenerateQSUrlStack(
+  app,
+  "GenerateQSUrlStack",
+  cognitoStack.userPool,
+  cognitoStack.userPoolClientId,
+  {
+    env: {
+      account: process.env.CDK_DEFAULT_ACCOUNT,
+      region: process.env.CDK_DEFAULT_REGION,
+    },
+  }
+);
+
 app.synth();
