@@ -18,28 +18,29 @@ export class AuthStack extends Stack {
     super(scope, id, props);
 
     // Define a new Lambda resource with the explicit role
-    const loginFunc = new lambda.Function(
-      this,
-      "BackendHandler",
-      {
-        runtime: lambda.Runtime.NODEJS_18_X,
-        code: lambda.Code.fromAsset("src/lambda-code/QSaccess"),
-        handler: "authenticateUserAndFetchToken.authenticateUserAndFetchToken",
-        environment: {
-          AWS_ACC_ID: this.account,
-          USER_POOL_CLIENT_ID: userPoolClient, //the-app-clientid
-          REGION: this.region,
-          USER_POOL_ID: userPool.userPoolId,
-        },
-        timeout: Duration.minutes(1),
-      }
-    );
+    const loginFunc = new lambda.Function(this, "BackendHandler", {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      code: lambda.Code.fromAsset("src/lambda-code/QSaccess"),
+      handler: "authenticateUserAndFetchToken.authenticateUserAndFetchToken",
+      environment: {
+        AWS_ACC_ID: this.account,
+        USER_POOL_CLIENT_ID: userPoolClient, //the-app-clientid
+        REGION: this.region,
+        USER_POOL_ID: userPool.userPoolId,
+      },
+      timeout: Duration.minutes(1),
+    });
 
     // Grant permissions to the Lambda function
-    loginFunc.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['cognito-idp:InitiateAuth'],
-      resources: [userPool.userPoolArn]
-    }));
+    loginFunc.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          "cognito-idp:InitiateAuth",
+          "cognito-idp:RespondToAuthChallenge",
+        ],
+        resources: [userPool.userPoolArn],
+      })
+    );
 
     // Define the API Gateway
     const api = new apigateway.RestApi(this, "UserApi", {
@@ -48,12 +49,9 @@ export class AuthStack extends Stack {
     });
 
     // Lambda Integration
-    const lambdaIntegration = new apigateway.LambdaIntegration(
-      loginFunc,
-      {
-        requestTemplates: { "application/json": '{ "statusCode": "200" }' },
-      }
-    );
+    const lambdaIntegration = new apigateway.LambdaIntegration(loginFunc, {
+      requestTemplates: { "application/json": '{ "statusCode": "200" }' },
+    });
 
     // Define a new resource and method with Cognito Authorizer
     const loginResource = api.root.addResource("login");

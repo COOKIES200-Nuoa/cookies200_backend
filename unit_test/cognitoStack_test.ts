@@ -1,19 +1,17 @@
-import { App, Resource, Stack } from 'aws-cdk-lib';
+import { App } from 'aws-cdk-lib';
 import { Capture, Match, Template } from 'aws-cdk-lib/assertions';
 import { CognitoStack } from '../src/lib/cognito_stack'; 
-import { Effect } from 'aws-cdk-lib/aws-iam';
-import { Action } from 'aws-cdk-lib/aws-appconfig';
 
-describe('CognitoStack', () => {
-  const app = new App();
-  const stack = new CognitoStack(app, 'CognitoStack', {
-    env: { 
-      account: '891377270638', 
-      region: 'ap-southeast-1',    
-    }
-  });
+  describe('CognitoStack', () => {
+    const app = new App();
+    const cognitoStack = new CognitoStack(app, 'CognitoStack', {
+      env: { 
+        account: '891377270638', 
+        region: 'ap-southeast-1',    
+      }
+    });
 
-  const template = Template.fromStack(stack);
+  const template = Template.fromStack(cognitoStack);
   const authenticatedRoleCapture = new Capture(); // Dynamically capture logical ID ref of Authenticated Role
 
   test('User Pool Created with Correct Configuration', () => {
@@ -98,7 +96,7 @@ describe('CognitoStack', () => {
           {
             Effect: 'Allow',
             Action: 'sts:AssumeRole',
-            Resource: `arn:aws:iam::${stack.account}:role/*TenantRole*`,
+            Resource: `arn:aws:iam::${cognitoStack.account}:role/*TenantRole*`,
           }
         ],
       },
@@ -153,3 +151,4 @@ describe('CognitoStack', () => {
   // });
   // more unit tests added in the future
 });
+
