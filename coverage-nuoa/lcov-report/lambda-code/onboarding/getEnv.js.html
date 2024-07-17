@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for lambda-code/onboarding/quicksightOnboarding.js</title>
+    <title>Code coverage report for lambda-code/onboarding/getEnv.js</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../prettify.css" />
     <link rel="stylesheet" href="../../base.css" />
@@ -19,13 +19,13 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../index.html">All files</a> / <a href="index.html">lambda-code/onboarding</a> quicksightOnboarding.js</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">lambda-code/onboarding</a> getEnv.js</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/8</span>
+                <span class='fraction'>0/3</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/8</span>
+                <span class='fraction'>0/2</span>
             </div>
         
             
@@ -74,32 +74,29 @@
 <a name='L9'></a><a href='#L9'>9</a>
 <a name='L10'></a><a href='#L10'>10</a>
 <a name='L11'></a><a href='#L11'>11</a>
-<a name='L12'></a><a href='#L12'>12</a>
-<a name='L13'></a><a href='#L13'>13</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<a name='L12'></a><a href='#L12'>12</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">const { createQSDashboard } = <span class="cstat-no" title="statement not covered" >require('./helpers/createDashboard/createDashboard');</span>
-const { createTenant } = <span class="cstat-no" title="statement not covered" >require('./helpers/createTenant/createTenant');</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">const getEnv = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
+    userPoolId: process.env.USER_POOL_ID,
+    region: process.env.REGION,
+    awsAccountId: process.env.AWS_ACC_ID,
+    nuoaAuthRoleArn: process.env.AUTH_ROLE_ARN,
+    identityPoolId: process.env.IDPOOL_ID,
+    userPoolClientId: process.env.USER_POOL_CLIENT_ID,
+    datasetId: process.env.DATASET,
+    adminId: process.env.QUICKSIGHT_ADMIN_ID,
+});
 &nbsp;
-<span class="cstat-no" title="statement not covered" >exports.quicksightOnboarding = <span class="fstat-no" title="function not covered" >as</span>ync (event) =&gt; {</span>
-    const tenant = <span class="cstat-no" title="statement not covered" >event.detail.requestParameters.groupName;</span>
-    const email = <span class="cstat-no" title="statement not covered" >`${tenant}@hotmail.com`;</span>
-<span class="cstat-no" title="statement not covered" >    console.log('Tenant: ', tenant);</span>
-// ========= Create Tenant Group =========
-    const tenantRoleArn = <span class="cstat-no" title="statement not covered" >await createTenant(tenant);</span>
-&nbsp;
-// ========= Create Dashboard and Invite User =========
-<span class="cstat-no" title="statement not covered" >    await createQSDashboard(tenant, email, tenantRoleArn);</span>
-};</pre></td></tr></table></pre>
+<span class="cstat-no" title="statement not covered" >module.exports = { getEnv };</span></pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->

@@ -5,16 +5,17 @@ const {
     CreateDashboardCommand,
     RegisterUserCommand,
 } = require('@aws-sdk/client-quicksight');
+const { getEnv } = require('../../getEnv');
 
 const { createQuickSightResource } = require('./createResource');
 
-const region = process.env.REGION;
-const awsAccountId = process.env.AWS_ACC_ID;
-const datasetId = process.env.DATASET;
-const adminId = process.env.QUICKSIGHT_ADMIN_ID;
+// const region = process.env.REGION;
+// const awsAccountId = process.env.AWS_ACC_ID;
+// const datasetId = process.env.DATASET;
+// const adminId = process.env.QUICKSIGHT_ADMIN_ID;
 
 const createNamespace = createQuickSightResource('Namespace', CreateNamespaceCommand);
-const createTemplate = createQuickSightResource('Template ', CreateTemplateCommand);
+const createTemplate = createQuickSightResource('Template', CreateTemplateCommand);
 const createAnalysis = createQuickSightResource('Analysis', CreateAnalysisCommand);
 const createDashboard = createQuickSightResource('Dashboard', CreateDashboardCommand);
 const registerUser = createQuickSightResource('User', RegisterUserCommand);
@@ -34,7 +35,7 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
 
 // ========= Create Namespace Params =========
     const createNameSpaceParams = {
-        AwsAccountId: awsAccountId,
+        AwsAccountId: getEnv().awsAccountId,
         IdentityStore: "QUICKSIGHT",
         Namespace: tenant,
     };
@@ -63,13 +64,13 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
 
 // ========= Create Template Params =========
     const createTemplateParams = {
-        AwsAccountId: awsAccountId,
+        AwsAccountId: getEnv().awsAccountId,
         TemplateId: baseTemplate,
         Name: baseTemplateName,
         Definition: minimalTemplateDefinition,
         Permissions: [
             {
-                Principal: `arn:aws:quicksight:${region}:${awsAccountId}:user/default/${adminId}`,
+                Principal: `arn:aws:quicksight:${getEnv().region}:${getEnv().awsAccountId}:user/default/${getEnv().adminId}`,
                 Actions: [
                     "quicksight:DescribeTemplate", 
                     "quicksight:DescribeTemplateAlias", 
@@ -82,23 +83,23 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
 
 // ========= Create Analysis Params =========
     const createAnalysisParams = {
-        AwsAccountId: awsAccountId,
+        AwsAccountId: getEnv().awsAccountId,
         AnalysisId: analysisId, 
         Name: analysisName,
         SourceEntity: {
             SourceTemplate: {
-                Arn: `arn:aws:quicksight:${region}:${awsAccountId}:template/${baseTemplate}`,
+                Arn: `arn:aws:quicksight:${getEnv().region}:${getEnv().awsAccountId}:template/${baseTemplate}`,
                 DataSetReferences: [
                     {
                         DataSetPlaceholder: 'Placeholder_dataset',
-                        DataSetArn: `arn:aws:quicksight:${region}:${awsAccountId}:dataset/${datasetId}`
+                        DataSetArn: `arn:aws:quicksight:${getEnv().region}:${getEnv().awsAccountId}:dataset/${getEnv().datasetId}`
                     }
                 ]
             }
         },
         Permissions: [
             {
-                Principal: `arn:aws:quicksight:${region}:${awsAccountId}:user/default/${adminId}`,
+                Principal: `arn:aws:quicksight:${getEnv().region}:${getEnv().awsAccountId}:user/default/${getEnv().adminId}`,
                 Actions: [
                     "quicksight:RestoreAnalysis", 
                     "quicksight:UpdateAnalysisPermissions", 
@@ -114,19 +115,19 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
 
 // ========= Create Dashboard Params =========
     const createDashboardParams = {
-        AwsAccountId: awsAccountId,
+        AwsAccountId: getEnv().awsAccountId,
         DashboardId: dashboardId,
         Name: dashboardName,
         LinkEntities:[
-            `arn:aws:quicksight:${region}:${awsAccountId}:analysis/${analysisId}`
+            `arn:aws:quicksight:${getEnv().region}:${getEnv().awsAccountId}:analysis/${analysisId}`
         ],
         SourceEntity: {
             SourceTemplate: {
-                Arn: `arn:aws:quicksight:${region}:${awsAccountId}:template/${baseTemplate}`,
+                Arn: `arn:aws:quicksight:${getEnv().region}:${getEnv().awsAccountId}:template/${baseTemplate}`,
                 DataSetReferences: [
                     {
                         DataSetPlaceholder: 'Placeholder_dataset',
-                        DataSetArn: `arn:aws:quicksight:${region}:${awsAccountId}:dataset/${datasetId}`
+                        DataSetArn: `arn:aws:quicksight:${getEnv().region}:${getEnv().awsAccountId}:dataset/${getEnv().datasetId}`
                     }
                 ]
             }
@@ -134,7 +135,7 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
         Permissions: [
             {
                 // Grant permissions to admin
-                Principal: `arn:aws:quicksight:${region}:${awsAccountId}:user/default/${adminId}`,
+                Principal: `arn:aws:quicksight:${getEnv().region}:${getEnv().awsAccountId}:user/default/${getEnv().adminId}`,
                 Actions: [
                     "quicksight:DescribeDashboard", 
                     "quicksight:ListDashboardVersions", 
@@ -148,7 +149,7 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
             },
             {
                 // Grant permissions to tenant's namespace
-                Principal: `arn:aws:quicksight:${region}:${awsAccountId}:namespace/${tenant}`,
+                Principal: `arn:aws:quicksight:${getEnv().region}:${getEnv().awsAccountId}:namespace/${tenant}`,
                 Actions: [
                     'quicksight:DescribeDashboard',
                     'quicksight:ListDashboardVersions',
@@ -160,7 +161,7 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
 
 // ========= Register User Params =========
     const registerUserParams = {
-        AwsAccountId: awsAccountId,
+        AwsAccountId: getEnv().awsAccountId,
         Email: email,
         IdentityType: 'IAM',
         Namespace: tenant,
