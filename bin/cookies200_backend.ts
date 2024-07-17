@@ -5,6 +5,7 @@ import { AuthStack } from "../src/lib/auth_stack";
 import { GenerateQSUrlStack } from "../src/lib/generateQSUrl_stack";
 import { CognitoStack } from "../src/lib/cognito_stack";
 import { QuickSightOnboardingStack } from "../src/lib/onboarding_stack";
+import { DynamoDBExportStack } from "../src/lib/database_stack"
 
 const app = new cdk.App();
 
@@ -55,5 +56,7 @@ const generateQSUrlStack = new GenerateQSUrlStack(
     },
   }
 );
+
+new DynamoDBExportStack(app, 'DynamoDBExportStack');
 
 app.synth();
