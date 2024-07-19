@@ -32,7 +32,7 @@ npm-debug.log*
 
 
 # Testing specific
-coverage/
+coverage-nuoa/
 
 # Local development
 local/
