@@ -10,7 +10,7 @@
   },
   "include": [
     "src/**/*"
-  ],
+, "src/lambda-code/QSaccess/fetchUserRelatedInfo.js"  ],
   "exclude": [
     "node_modules", 
     "dist"       

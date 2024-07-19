@@ -1,19 +1,12 @@
 const jwt = require("jsonwebtoken");
 const {
-  CognitoIdentityProviderClient,
-} = require("@aws-sdk/client-cognito-identity-provider");
-const {
   QuickSightClient,
   GenerateEmbedUrlForRegisteredUserCommand,
 } = require("@aws-sdk/client-quicksight");
 const { error } = require("console");
 
-const USER_POOL_ID = process.env.USER_POOL_ID;
-const CLIENT_ID = process.env.USER_POOL_CLIENT_ID;
 const AWS_ACC_ID = process.env.AWS_ACC_ID;
 const AWS_REGION = process.env.AWS_REGION;
-
-const cognito = new CognitoIdentityProviderClient();
 const quicksight = new QuickSightClient();
 
 /**
@@ -79,7 +72,6 @@ async function generateQuickSightURL(accessToken) {
 }
 
 module.exports = {
-  authUserToFetchAccessToken,
   getCognitoUserGroups,
   generateQuickSightURL,
 };
