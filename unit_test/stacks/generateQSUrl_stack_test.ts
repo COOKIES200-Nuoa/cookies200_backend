@@ -24,13 +24,9 @@ test('GenerateQSUrlStack creates necessary resources', () => {
     Timeout: 60,
     Environment: {
       Variables: {
-        AWS_ACC_ID: {
-          Ref: 'AWS::AccountId'
-        },
-        USER_POOL_CLIENT_ID: userPoolClient,
-        REGION: {
-          Ref: 'AWS::Region'
-        },
+        AWS_ACC_ID: { Ref: 'AWS::AccountId' }, // Adjusted to match the synthesized template
+        REGION: { Ref: 'AWS::Region' }, // Adjusted to match the synthesized template
+        USER_POOL_CLIENT_ID: userPoolClient, // Directly using the client ID string
         USER_POOL_ID: {
           'Fn::ImportValue': 'TestStack:ExportsOutputRefTestUserPool83C2ABD0528647F1' // Adjusted to match the correct import value
         }
@@ -43,7 +39,7 @@ test('GenerateQSUrlStack creates necessary resources', () => {
     PolicyDocument: {
       Statement: Match.arrayWith([
         Match.objectLike({
-          Action: 'quicksight:GenerateEmbedUrlForRegisteredUser',
+          Action: 'quicksight:GenerateEmbedUrlForRegisteredUser', // Adjusted to match the synthesized template
           Effect: 'Allow',
           Resource: '*'
         })
