@@ -1,9 +1,9 @@
 const AWS = require('aws-sdk');
 const glue = new AWS.Glue();
 
-exports.handler = async (event) => {
+exports.glueTrigger = async (event) => {
   const params = {
-    JobName: process.env.GLUE_JOB_NAME,
+    JobName: process.env.GLUE_JOB,
   };
 
   try {

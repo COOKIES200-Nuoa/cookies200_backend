@@ -4,7 +4,7 @@ const { unmarshall } = require("@aws-sdk/util-dynamodb");
 const s3Client = new S3Client();
 const bucketName = process.env.BUCKET_NAME;
 
-// Define a mapping of table names to ID attribute names
+// Mapping
 const tableIdMapping = {
   ActivityTable: 'tenantActivityKey',
   EntityTable: 'tenantEntityKey',
@@ -22,7 +22,7 @@ exports.exportDtb = async (event) => {
         continue; 
       }
 
-      // Extract the table name from the event source ARN
+      // Extract table name from event source ARN
       const eventSourceARN = record.eventSourceARN;
       const tableName = eventSourceARN.split('/')[1];
 
@@ -39,14 +39,14 @@ exports.exportDtb = async (event) => {
         continue; 
       }
 
-      // Create a unique S3 object key
+      // Create unique S3 object key => can change later to whatver we like :)
       const s3Key = `dynamodb/${tableName}/${itemId}-${new Date().toISOString()}.json`;
 
       const data = {
         newItem: unmarshall(newItem),
       };
 
-      // Save the data to S3
+      // Save data to S3
       const params = {
         Bucket: bucketName,
         Key: s3Key,

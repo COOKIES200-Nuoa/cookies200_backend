@@ -2,7 +2,6 @@ import * as cdk from 'aws-cdk-lib';
 import { Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
-import * as kinesis from 'aws-cdk-lib/aws-kinesis';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
@@ -50,7 +49,7 @@ export class DynamoDBExportStack extends Stack {
       environment: {
         BUCKET_NAME: exportBucket.bucketName,
       },
-      timeout: cdk.Duration.minutes(1),
+      timeout: cdk.Duration.minutes(1), //change later
     });
 
     // Add DynamoDB Streams as Event Sources for Lambda
