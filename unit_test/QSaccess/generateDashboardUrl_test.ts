@@ -1,12 +1,12 @@
-const { mockClient } = require('aws-sdk-client-mock');
-const { QuickSightClient, GenerateEmbedUrlForRegisteredUserCommand } = require('@aws-sdk/client-quicksight');
+const { mockClient: awsMockClient } = require('aws-sdk-client-mock');
+const { QuickSightClient: MockQuickSightClient, GenerateEmbedUrlForRegisteredUserCommand: MockGenerateEmbedUrlForRegisteredUserCommand } = require('@aws-sdk/client-quicksight');
 const { generateDashboardUrl } = require('../../src/lambda-code/QSaccess/generateDashboardUrl');
 const fetchUserRelatedInfo = require('../../src/lambda-code/QSaccess/fetchUserRelatedInfo');
 
 jest.mock('../../src/lambda-code/QSaccess/fetchUserRelatedInfo');
 
 describe('generateDashboardUrl', () => {
-  const quicksightMock = mockClient(QuickSightClient);
+  const quicksightMock = awsMockClient(MockQuickSightClient);
 
   beforeEach(() => {
     quicksightMock.reset();
