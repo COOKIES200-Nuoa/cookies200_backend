@@ -7,15 +7,12 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as s3Notifications from 'aws-cdk-lib/aws-s3-notifications';
 
-export class CompleteFlowStack extends Stack {
+export class GlueStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    // S3 Bucket for processed data
-    const processedDataBucket = new s3.Bucket(this, 'ProcessedDataBucket', {
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
-    });
+    // Reference existing S3 Bucket for processed data
+    const processedDataBucket = s3.Bucket.fromBucketName(this, 'ProcessedDataBucket', 'processed-nuoa-database');
 
     // IAM Role for Glue Job
     const glueRole = new iam.Role(this, 'GlueJobRole', {
@@ -25,20 +22,35 @@ export class CompleteFlowStack extends Stack {
       ],
     });
 
+    glueRole.addToPolicy(new iam.PolicyStatement({
+      actions: ['s3:GetObject', 's3:ListBucket', 's3:PutObject', 's3:DeleteObject' ],
+      resources: [
+        `arn:aws:s3:::nuoadatabase`,
+        `arn:aws:s3:::nuoadatabase/*`,
+        processedDataBucket.bucketArn,
+        `${processedDataBucket.bucketArn}/*`,
+      ],
+    }));
+
     // Glue Job
     const glueJob = new glue.CfnJob(this, 'GlueJob', {
       role: glueRole.roleArn,
       command: {
         name: 'glueetl',
-        scriptLocation: 'src/lambda-code/dtb-pipeline/glue__job.py', // Update this path
+        scriptLocation: 's3://processed-nuoa-database/glue__job.py', 
         pythonVersion: '3',
       },
       defaultArguments: {
         '--job-bookmark-option': 'job-bookmark-enable',
+        '--processed_bucket': processedDataBucket.bucketName, 
       },
-      glueVersion: '2.0',
+      glueVersion: '4.0',
       maxCapacity: 2.0,
     });
+
+
+    // Construct ARN for Glue Job
+    const glueJobArn = `arn:aws:glue:${this.region}:${this.account}:job/${glueJob.ref}`;
 
     // IAM Role for Lambda Function
     const lambdaRole = new iam.Role(this, 'GlueJobTriggerLambdaRole', {
@@ -50,17 +62,17 @@ export class CompleteFlowStack extends Stack {
 
     lambdaRole.addToPolicy(new iam.PolicyStatement({
       actions: ['glue:StartJobRun'],
-      resources: [glueJob.attrArn], // Restrict this to specific resources
+      resources: [glueJobArn], 
     }));
 
     // Lambda Function to Trigger Glue Job
     const triggerFunction = new lambda.Function(this, 'TriggerGlueJobFunction', {
-      runtime: lambda.Runtime.PYTHON_3_8,
-      code: lambda.Code.fromAsset('src'),
-      handler: 'trigger_glue_job.lambda_handler',
+      runtime: lambda.Runtime.NODEJS_18_X,
+      code: lambda.Code.fromAsset('src/lambda-code/dtbpipeline'),
+      handler: 'glueTrigger.glueTrigger',
       role: lambdaRole,
       environment: {
-        JOB_NAME: glueJob.ref, // Reference the Glue job
+        JOB_NAME: glueJob.ref, 
       },
     });
 
@@ -72,6 +84,3 @@ export class CompleteFlowStack extends Stack {
   }
 }
 
-const app = new cdk.App();
-new CompleteFlowStack(app, 'CompleteFlowStack');
-app.synth();

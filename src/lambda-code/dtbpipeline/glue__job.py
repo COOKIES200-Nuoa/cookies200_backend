@@ -22,7 +22,7 @@ datasource0 = glueContext.create_dynamic_frame.from_options(
 )
 
 # Transform and load data into another S3 bucket
-output_path = "s3://nuoadatabase-processed/dynamodb/"
+output_path = "s3://processed-nuoa-database/dynamodb/"
 datasink1 = glueContext.write_dynamic_frame.from_options(
     frame = datasource0,
     connection_type = "s3",
