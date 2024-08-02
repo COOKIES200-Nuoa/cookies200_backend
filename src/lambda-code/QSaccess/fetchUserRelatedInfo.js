@@ -10,10 +10,6 @@ const AWS_ACC_ID = process.env.AWS_ACC_ID;
 const AWS_REGION = process.env.AWS_REGION;
 const quicksight = new QuickSightClient();
 
-/**
- * Get user's email from Cognito using access token
- * @param {string} accessToken
- */
 /* @param {string} token - The JWT access token from Cognito.
  * @returns {string[]} - An array of groups the user belongs to.*/
 function getCognitoUserGroups(accessToken) {
@@ -30,24 +26,9 @@ function getCognitoUserGroups(accessToken) {
   }
 }
 
-function getCognitoUsername(accessToken) {
-  try {
-    const decodedToken = jwt.decode(accessToken);
-    const usernames =
-      decodedToken["cognito:username"] || decodedToken["username"] || [];
-    if (!usernames || usernames.length === 0) {
-      throw new Error(`No group found in the access token ${error}`);
-    }
-    return usernames[0];
-  } catch (error) {
-    console.error("Failed to decode token:", error);
-    throw new Error(`Invalid token ${error}`);
-  }
-}
-
 async function getUserRole(accessToken) {
   const userGroup = await getCognitoUserGroups(accessToken);
-  const username = await getCognitoUsername(accessToken);
+  const username = `${userGroup}TenantRole/${userGroup}`;
   const input = {
     // DescribeUserRequest
     UserName: username,
@@ -55,10 +36,11 @@ async function getUserRole(accessToken) {
     Namespace: userGroup,
   };
   try {
+    // Currently, it's either READER or AUTHOR
     const command = new DescribeUserCommand(input);
     const response = await quicksight.send(command);
     return response.User.Role;
-  } catch (Error) {
+  } catch (error) {
     console.error("Error: ", error);
     throw new Error(error);
   }
@@ -70,18 +52,10 @@ async function generateQuickSightURL(accessToken) {
   const userArn = `arn:aws:quicksight:${AWS_REGION}:${AWS_ACC_ID}:user/${userGroup}/${userGroup}TenantRole/${userGroup}`;
   const dashboardId = `${userGroup}-dashboard`;
   const analysisId = `${userGroup}-analysis`;
-
-  const experienceId = userRole == "READER" ? dashboardId : analysisId;
   const initialPath =
     userRole == "READER"
       ? `/dashboards/${dashboardId}`
       : `/analyses/${analysisId}`;
-
-  const dashboardExperienceConfiguration = {
-    Dashboard: {
-      InitialDashboardId: experienceId,
-    },
-  };
   const consoleExperienceConfiguration = {
     QuickSightConsole: {
       FeatureConfigurations: {
