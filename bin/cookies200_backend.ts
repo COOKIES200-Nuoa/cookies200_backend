@@ -7,6 +7,7 @@ import { CognitoStack } from "../src/lib/cognito_stack";
 import { QuickSightOnboardingStack } from "../src/lib/onboarding_stack";
 import { DynamoDBExportStack } from "../src/lib/database_stack";
 import { GlueStack } from "../src/lib/glueJob_stack";
+import { AthenaQuickSightStack } from "../src/lib/athenaQS_stack";
 
 const app = new cdk.App();
 
@@ -58,7 +59,19 @@ const generateQSUrlStack = new GenerateQSUrlStack(
   }
 );
 
+const athenaQSStack = new AthenaQuickSightStack(
+  app, 
+  'AthenaQuickSightStack',
+  {
+    env: {
+      account: process.env.CDK_DEFAULT_ACCOUNT,
+      region: process.env.CDK_DEFAULT_REGION,
+    },
+  }
+);
+
 new DynamoDBExportStack(app, 'DynamoDBExportStack');
 new GlueStack(app, 'GlueStack');
+
 
 app.synth();
