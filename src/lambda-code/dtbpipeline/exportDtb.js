@@ -2,13 +2,12 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { unmarshall } = require("@aws-sdk/util-dynamodb");
 
 const s3Client = new S3Client();
-const bucketName = process.env.BUCKET_NAME;
 
 // Mapping
 const tableIdMapping = {
   ActivityTable: 'tenantActivityKey',
   EntityTable: 'tenantEntityKey',
-  EntityStructure: 'tenantId' 
+  EntityStructure: 'tenantId'
 };
 
 exports.exportDtb = async (event) => {
@@ -19,7 +18,7 @@ exports.exportDtb = async (event) => {
       const newItem = record.dynamodb.NewImage;
       if (!newItem) {
         console.log('No new image found for record:', JSON.stringify(record, null, 2));
-        continue; 
+        continue;
       }
 
       // Extract table name from event source ARN
@@ -36,7 +35,7 @@ exports.exportDtb = async (event) => {
       const itemId = newItem[idAttributeName] ? newItem[idAttributeName].S : null;
       if (!itemId) {
         console.log(`No ${idAttributeName} found in new image for record:`, JSON.stringify(newItem, null, 2));
-        continue; 
+        continue;
       }
 
       // Create unique S3 object key => can change later to whatver we like :)
@@ -48,13 +47,14 @@ exports.exportDtb = async (event) => {
 
       // Save data to S3
       const params = {
-        Bucket: bucketName,
+        Bucket: process.env.BUCKET_NAME,
         Key: s3Key,
         Body: JSON.stringify(data),
         ContentType: 'application/json',
       };
 
       await s3Client.send(new PutObjectCommand(params));
+
       console.log(`Successfully saved record to ${s3Key}`);
     } catch (err) {
       console.error(`Error processing record: ${JSON.stringify(record, null, 2)}`, err);

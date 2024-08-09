@@ -1,14 +1,9 @@
-const jwt = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
 const {
   CognitoIdentityProviderClient,
   InitiateAuthCommand,
-  RespondToAuthChallengeCommand,
-} = require("@aws-sdk/client-cognito-identity-provider");
-const {
-  QuickSightClient,
-  GenerateEmbedUrlForRegisteredUserCommand,
-} = require("@aws-sdk/client-quicksight");
-const { error } = require("console");
+  RespondToAuthChallengeCommand
+} = require('@aws-sdk/client-cognito-identity-provider');
 
 const USER_POOL_ID = process.env.USER_POOL_ID;
 const CLIENT_ID = process.env.USER_POOL_CLIENT_ID;
@@ -20,60 +15,58 @@ exports.authenticateUserAndFetchToken = async (event) => {
 
   try {
     const params = {
-      AuthFlow: "USER_PASSWORD_AUTH",
+      AuthFlow: 'USER_PASSWORD_AUTH',
       ClientId: CLIENT_ID,
       UserPoolId: USER_POOL_ID,
       AuthParameters: {
         USERNAME: username,
-        PASSWORD: password,
-      },
+        PASSWORD: password
+      }
     };
     const command = new InitiateAuthCommand(params);
     const responseInitiateAuth = await cognito.send(command);
 
-    if (responseInitiateAuth.ChallengeName === "NEW_PASSWORD_REQUIRED") {
+    if (responseInitiateAuth.ChallengeName === 'NEW_PASSWORD_REQUIRED') {
       if (!newPassword) {
         return {
           statusCode: 400,
           headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-        'Access-Control-Allow-Methods': '*',
-        'Access-Control-Allow-Origin': '*'
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+            'Access-Control-Allow-Methods': '*',
+            'Access-Control-Allow-Origin': '*'
           },
           body: JSON.stringify({
-            message: "New password required.",
-            challengeName: command.ChallengeName,
-          }),
+            message: 'New password required.',
+            challengeName: responseInitiateAuth.ChallengeName
+          })
         };
       } else {
         // Step 2: Respond to Auth Challenge
         const respondToAuthChallengeParams = {
-          ChallengeName: "NEW_PASSWORD_REQUIRED",
+          ChallengeName: 'NEW_PASSWORD_REQUIRED',
           ClientId: CLIENT_ID,
           UserPoolId: USER_POOL_ID,
           ChallengeResponses: {
             USERNAME: username,
-            NEW_PASSWORD: newPassword,
+            NEW_PASSWORD: newPassword
           },
-          Session: responseInitiateAuth.Session,
+          Session: responseInitiateAuth.Session
         };
-        const commandAuthChallange = new RespondToAuthChallengeCommand(
-          respondToAuthChallengeParams
-        );
-        const responseAuthChallenge = await cognito.send(commandAuthChallange);
+        const commandAuthChallenge = new RespondToAuthChallengeCommand(respondToAuthChallengeParams);
+        const responseAuthChallenge = await cognito.send(commandAuthChallenge);
         return {
           statusCode: 200,
           headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-        'Access-Control-Allow-Methods': '*',
-        'Access-Control-Allow-Origin': '*'
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+            'Access-Control-Allow-Methods': '*',
+            'Access-Control-Allow-Origin': '*'
           },
           body: JSON.stringify({
-            message: "Password changed successfully!",
+            message: 'Password changed successfully!',
             tokens: responseAuthChallenge.AuthenticationResult
-          }),
+          })
         };
       }
     }
@@ -85,15 +78,14 @@ exports.authenticateUserAndFetchToken = async (event) => {
         'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
         'Access-Control-Allow-Methods': '*',
         'Access-Control-Allow-Origin': '*'
-          },
+      },
       body: JSON.stringify({
-        message: "Authentication successful!",
+        message: 'Authentication successful!',
         tokens: responseInitiateAuth.AuthenticationResult
-      }),
+      })
     };
-    
   } catch (error) {
-    console.error("Error during authentication:", error);
+    console.error('Error during authentication:', error);
     return {
       statusCode: 400,
       headers: {
@@ -101,11 +93,11 @@ exports.authenticateUserAndFetchToken = async (event) => {
         'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
         'Access-Control-Allow-Methods': '*',
         'Access-Control-Allow-Origin': '*'
-          },
+      },
       body: JSON.stringify({
-        message: "Authentication failed",
-        error: error.message,
-      }),
+        message: 'Authentication failed',
+        error: error.message
+      })
     };
   }
 };

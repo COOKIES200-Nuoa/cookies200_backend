@@ -151,4 +151,3 @@ import { CognitoStack } from '../src/lib/cognito_stack';
   // });
   // more unit tests added in the future
 });
-

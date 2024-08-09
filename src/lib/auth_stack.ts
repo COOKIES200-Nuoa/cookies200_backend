@@ -20,7 +20,7 @@ export class AuthStack extends Stack {
     // Define a new Lambda resource with the explicit role
     const loginFunc = new lambda.Function(this, "BackendHandler", {
       runtime: lambda.Runtime.NODEJS_18_X,
-      code: lambda.Code.fromAsset("src/lambda-code/QSaccess"),
+      code: lambda.Code.fromAsset("src/lambda-code/Login"),
       handler: "authenticateUserAndFetchToken.authenticateUserAndFetchToken",
       environment: {
         AWS_ACC_ID: this.account,

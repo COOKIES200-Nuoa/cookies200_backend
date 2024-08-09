@@ -31,8 +31,11 @@ export class GenerateQSUrlStack extends Stack {
     lambdaRole.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
-        actions: ["quicksight:GenerateEmbedUrlForRegisteredUser"], // Example action
-        resources: ["*"] // Specify resources as needed
+        actions: [
+          "quicksight:GenerateEmbedUrlForRegisteredUser",
+          "quicksight:DescribeUser",
+        ], // Example action
+        resources: ["*"], // Specify resources as needed
       })
     );
 
@@ -60,7 +63,7 @@ export class GenerateQSUrlStack extends Stack {
       restApiName: "QS Generate Url API",
       description: "API to generate Quicksight URL",
     });
-    
+
     const authorizer = new apigateway.CognitoUserPoolsAuthorizer(
       this,
       "UserAuthorizer",
@@ -68,7 +71,7 @@ export class GenerateQSUrlStack extends Stack {
         cognitoUserPools: [userPool],
       }
     );
-    
+
     // Lambda Integration
     const lambdaIntegration = new apigateway.LambdaIntegration(
       generateDashboardUrlFunc,
@@ -80,14 +83,13 @@ export class GenerateQSUrlStack extends Stack {
     // Define a new resource and method with Cognito Authorizer
     const loginResource = api.root.addResource("dashboard");
     loginResource.addMethod("GET", lambdaIntegration, {
-      authorizer: authorizer
+      authorizer: authorizer,
     });
 
     // Output API Gateway Endpoint
     new CfnOutput(this, "QSGenerateApiUrl", {
       value: api.url,
-      description:
-        "The URL to generate Quicksight URL",
+      description: "The URL to generate Quicksight URL",
     });
   }
 }
