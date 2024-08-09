@@ -86,5 +86,6 @@ async function generateQuickSightURL(accessToken) {
 
 module.exports = {
   getCognitoUserGroups,
+  getUserRole,  // Ensure this is exported
   generateQuickSightURL,
 };
