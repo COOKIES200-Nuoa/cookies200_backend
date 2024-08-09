@@ -24,6 +24,7 @@ export class AthenaQuickSightStack extends Stack {
       ],
     });
 
+    // Change result bucket to prod bucket after testing
     athenaRole.addToPolicy(new iam.PolicyStatement({
       actions: [
         'athena:StartQueryExecution',
@@ -32,7 +33,7 @@ export class AthenaQuickSightStack extends Stack {
         's3:GetObject',
         's3:ListBucket'
       ],
-      resources: [athenaResultsBucket.bucketArn, `${athenaResultsBucket.bucketArn}/*`],
+      resources: ['arn:aws:s3:::processed-nuoa-joinedtable-dev', 'arn:aws:s3:::processed-nuoa-joinedtable-dev/*'],
     }));
 
     // Create Athena tables Lambda
@@ -42,28 +43,42 @@ export class AthenaQuickSightStack extends Stack {
       handler: 'createAthenaTable.createAthenaTable',
       role: athenaRole,
       environment: {
+        AWS_ACC_ID: this.account,
+        REGION: this.region,
         DATABASE_NAME: 'nuoa_database',
         RESULT_BUCKET: athenaResultsBucket.bucketName,
         UPDATE_QUICKSIGHT_FUNCTION_NAME: 'UpdateQuickSightFunction', 
       },
     });
 
+    // Create Quicksight Data Source and Dataset Lambda
+    // const createDatasetFunction = new lambda.Function(this, 'CreateDatasetFunction', {
+    //   runtime: lambda.Runtime.NODEJS_18_X,
+    //   code: lambda.Code.fromAsset('src/lambda-code/dtbpipeline'),
+    //   handler: 'importDtQS.importDtQS',
+    //   role: '',
+    //   environment: {
+    //     ACCOUNT_ID: this.account,
+    //     REGION: this.region,
+    //   },
+    // });
+
     // Lambda update QuickSight datasets
-    const updateQuickSightFunction = new lambda.Function(this, 'UpdateQuickSightFunction', {
-      runtime: lambda.Runtime.NODEJS_18_X,
-      code: lambda.Code.fromAsset('src/lambda-code/dtbpipeline'),
-      handler: 'updateQS.updateQS',
-      role: athenaRole,
-      environment: {
-        ATHENA_DATABASE_NAME: 'nuoa_database',
-        DATASET_NAMES: 'ActivityTable,EntityTable,EntityStructureTable',
-        AWS_ACCOUNT_ID: cdk.Aws.ACCOUNT_ID,
-        AWS_REGION: cdk.Aws.REGION,
-      },
-    });
+    // const updateQuickSightFunction = new lambda.Function(this, 'UpdateQuickSightFunction', {
+    //   runtime: lambda.Runtime.NODEJS_18_X,
+    //   code: lambda.Code.fromAsset('src/lambda-code/dtbpipeline'),
+    //   handler: 'updateQS.updateQS',
+    //   role: athenaRole,
+    //   environment: {
+    //     ATHENA_DATABASE_NAME: 'nuoa_database',
+    //     DATASET_NAMES: 'ActivityTable,EntityTable,EntityStructureTable',
+    //     ACCOUNT_ID: this.account,
+    //     REGION: this.region,
+    //   },
+    // });
 
     // Grant permission to the first Lambda to invoke the second one
-    updateQuickSightFunction.grantInvoke(createAthenaTablesFunction);
+    // updateQuickSightFunction.grantInvoke(createAthenaTablesFunction);
 
     // Outputs
     new cdk.CfnOutput(this, 'AthenaResultsBucketName', {
