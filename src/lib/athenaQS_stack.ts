@@ -1,10 +1,12 @@
-import * as cdk from 'aws-cdk-lib';
-import { Stack, StackProps } from 'aws-cdk-lib';
+
+import {
+  aws_glue as glue,
+  aws_iam as iam,
+  aws_lambda as lambda,
+  aws_s3 as s3,
+} from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import * as glue from 'aws-cdk-lib/aws-glue';
-import * as iam from 'aws-cdk-lib/aws-iam';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as s3 from 'aws-cdk-lib/aws-s3';
+import { Stack, StackProps, RemovalPolicy, Duration, CfnOutput } from 'aws-cdk-lib';
 
 export class AthenaQuickSightStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -12,7 +14,7 @@ export class AthenaQuickSightStack extends Stack {
 
     // S3 Bucket for Athena query results - anh Binh check giup em co can khong nhe. Em khong ro logic cho nay
     const athenaResultsBucket = new s3.Bucket(this, 'AthenaResultsBucket', {
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
 
@@ -24,64 +26,99 @@ export class AthenaQuickSightStack extends Stack {
       ],
     });
 
-    // Change result bucket to prod bucket after testing
+    // Get S3 bucket location permissions
     athenaRole.addToPolicy(new iam.PolicyStatement({
+      sid: 'GetBucketLocationPermission',
+      actions: [
+        's3:GetBucketLocation',
+      ],
+      resources: ['arn:aws:s3:::*'],
+    }));
+
+    // Retreive processed data from datalake permissions
+    athenaRole.addToPolicy(new iam.PolicyStatement({
+      sid: 'DatalakeQueryPermissions',
+      actions: [
+        's3:GetObject',
+        's3:ListBucket',
+      ],
+      resources: ['arn:aws:s3:::processed-nuoa-joinedtable-dev', 'arn:aws:s3:::processed-nuoa-joinedtable-dev*'],
+    }));
+
+    // Athena query execution and table creation permissions
+    athenaRole.addToPolicy(new iam.PolicyStatement({
+      sid: 'AthenaQueryPermission',
       actions: [
         'athena:StartQueryExecution',
+        'athena:GetQueryExecution',
+        'athena:CreateTable',
+        'glue:GetDatabase',
+        'glue:CreateTable',
+        'glue:GetTable',
+        'quicksight:CreateIngestion'
+      ],
+      resources: ['*'],
+    }));
+
+    // Retrieve query result from athena result bucket
+    athenaRole.addToPolicy(new iam.PolicyStatement({
+      sid: 'ResultBucketQueryPermissions',
+      actions: [
         'athena:GetQueryResults',
+        's3:ListMultipartUploadParts',
+        'athena:GetWorkGroup',
         's3:PutObject',
         's3:GetObject',
-        's3:ListBucket'
+        'athena:StopQueryExecution',
+        's3:GetBucketLocation',
       ],
-      resources: ['arn:aws:s3:::processed-nuoa-joinedtable-dev', 'arn:aws:s3:::processed-nuoa-joinedtable-dev/*'],
+      resources: [`${athenaResultsBucket.bucketArn}*`],
     }));
+
+    // Invoke update quicksight dataset function permission
+    athenaRole.addToPolicy(new iam.PolicyStatement({
+      sid: 'InvokeUpdateFunctionPermission',
+      actions: [
+        'lambda:InvokeFunction',
+      ],
+      resources: [`arn:aws:lambda:${this.region}:${this.account}:function:${this.stackName}-UpdateQuickSightFunction*`],
+    }));
+
+    // Lambda update QuickSight datasets
+    const updateQuickSightFunction = new lambda.Function(this, 'UpdateQuickSightFunction', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      code: lambda.Code.fromAsset('src/lambda-code/dtbpipeline/updateQuickSightDataset'),
+      handler: 'updateQS.updateQS',
+      role: athenaRole,
+      environment: {
+        ATHENA_DATABASE_NAME: 'nuoa_database',
+        ACCOUNT_ID: this.account,
+        REGION: this.region,
+      },
+      timeout: Duration.minutes(1),
+    });
 
     // Create Athena tables Lambda
     const createAthenaTablesFunction = new lambda.Function(this, 'CreateAthenaTablesFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      code: lambda.Code.fromAsset('src/lambda-code/dtbpipeline'),
+      code: lambda.Code.fromAsset('src/lambda-code/dtbpipeline/createAthenaTable'),
       handler: 'createAthenaTable.createAthenaTable',
       role: athenaRole,
       environment: {
-        AWS_ACC_ID: this.account,
+        ACCOUNT_ID: this.account,
         REGION: this.region,
         DATABASE_NAME: 'nuoa_database',
         RESULT_BUCKET: athenaResultsBucket.bucketName,
-        UPDATE_QUICKSIGHT_FUNCTION_NAME: 'UpdateQuickSightFunction', 
+        UPDATE_FUNC_ARN: updateQuickSightFunction.functionArn, 
       },
+      timeout: Duration.minutes(1),
     });
-
-    // Create Quicksight Data Source and Dataset Lambda
-    // const createDatasetFunction = new lambda.Function(this, 'CreateDatasetFunction', {
-    //   runtime: lambda.Runtime.NODEJS_18_X,
-    //   code: lambda.Code.fromAsset('src/lambda-code/dtbpipeline'),
-    //   handler: 'importDtQS.importDtQS',
-    //   role: '',
-    //   environment: {
-    //     ACCOUNT_ID: this.account,
-    //     REGION: this.region,
-    //   },
-    // });
-
-    // Lambda update QuickSight datasets
-    // const updateQuickSightFunction = new lambda.Function(this, 'UpdateQuickSightFunction', {
-    //   runtime: lambda.Runtime.NODEJS_18_X,
-    //   code: lambda.Code.fromAsset('src/lambda-code/dtbpipeline'),
-    //   handler: 'updateQS.updateQS',
-    //   role: athenaRole,
-    //   environment: {
-    //     ATHENA_DATABASE_NAME: 'nuoa_database',
-    //     DATASET_NAMES: 'ActivityTable,EntityTable,EntityStructureTable',
-    //     ACCOUNT_ID: this.account,
-    //     REGION: this.region,
-    //   },
-    // });
 
     // Grant permission to the first Lambda to invoke the second one
     // updateQuickSightFunction.grantInvoke(createAthenaTablesFunction);
 
     // Outputs
-    new cdk.CfnOutput(this, 'AthenaResultsBucketName', {
+    new CfnOutput(this, 'AthenaResultsBucketName', {
       value: athenaResultsBucket.bucketName,
       description: 'The name of the S3 bucket for Athena query results',
     });

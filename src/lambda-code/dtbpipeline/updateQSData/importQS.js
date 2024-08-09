@@ -1,6 +1,11 @@
-const { createQSDataSource } = require("./createQSDataSource");
+const { createAthenaTable } = require("../createAthenaTable/createAthenaTable");
 
 exports.importQS = async (event) => {
+
+    const databaseName = event.databaseName;
+    const tableName = event.tableName;
+    const dataSourceBucket = event.dataSourceBucket;
+
     const dataSourceName = event.dataSourceName;
     const dataSourceId = `${dataSourceName}-id`;
 
@@ -62,4 +67,9 @@ exports.importQS = async (event) => {
     const datasetName = 'nuoa_emission_dataset';
 
     const dataSourceArn = await createQSDataSource(dataSourceId, dataSourceName);
+
+    const createAthenaTableResponse = await createAthenaTable(databaseName, tableName, dataSourceBucket);
+    if (createAthenaTableResponse.statusCode === 200) {
+
+    }
 }
