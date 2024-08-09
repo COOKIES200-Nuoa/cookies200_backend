@@ -1,25 +1,15 @@
 const jwt = require("jsonwebtoken");
 const {
-  CognitoIdentityProviderClient,
-} = require("@aws-sdk/client-cognito-identity-provider");
-const {
   QuickSightClient,
   GenerateEmbedUrlForRegisteredUserCommand,
+  DescribeUserCommand,
 } = require("@aws-sdk/client-quicksight");
 const { error } = require("console");
 
-const USER_POOL_ID = process.env.USER_POOL_ID;
-const CLIENT_ID = process.env.USER_POOL_CLIENT_ID;
 const AWS_ACC_ID = process.env.AWS_ACC_ID;
 const AWS_REGION = process.env.AWS_REGION;
-
-const cognito = new CognitoIdentityProviderClient();
 const quicksight = new QuickSightClient();
 
-/**
- * Get user's email from Cognito using access token
- * @param {string} accessToken
- */
 /* @param {string} token - The JWT access token from Cognito.
  * @returns {string[]} - An array of groups the user belongs to.*/
 function getCognitoUserGroups(accessToken) {
@@ -36,20 +26,36 @@ function getCognitoUserGroups(accessToken) {
   }
 }
 
+async function getUserRole(accessToken) {
+  const userGroup = await getCognitoUserGroups(accessToken);
+  const username = `${userGroup}TenantRole/${userGroup}`;
+  const input = {
+    // DescribeUserRequest
+    UserName: username,
+    AwsAccountId: AWS_ACC_ID,
+    Namespace: userGroup,
+  };
+  try {
+    // Currently, it's either READER or AUTHOR
+    const command = new DescribeUserCommand(input);
+    const response = await quicksight.send(command);
+    return response.User.Role;
+  } catch (error) {
+    console.error("Error: ", error);
+    throw new Error(error);
+  }
+}
+
 async function generateQuickSightURL(accessToken) {
   const userGroup = await getCognitoUserGroups(accessToken);
-  console.log("Usergroup: ", userGroup);
-
+  const userRole = await getUserRole(accessToken);
   const userArn = `arn:aws:quicksight:${AWS_REGION}:${AWS_ACC_ID}:user/${userGroup}/${userGroup}TenantRole/${userGroup}`;
-
   const dashboardId = `${userGroup}-dashboard`;
-
-  const dashboardExperienceConfiguration = {
-    Dashboard: {
-      InitialDashboardId: dashboardId,
-    },
-  };
-
+  const analysisId = `${userGroup}-analysis`;
+  const initialPath =
+    userRole == "READER"
+      ? `/dashboards/${dashboardId}`
+      : `/analyses/${analysisId}`;
   const consoleExperienceConfiguration = {
     QuickSightConsole: {
       FeatureConfigurations: {
@@ -57,17 +63,17 @@ async function generateQuickSightURL(accessToken) {
           Enabled: true,
         },
       },
-      InitialPath: `/dashboards/${dashboardId}`,
+      InitialPath: initialPath,
     },
   };
-
   const params = {
+    // GenerateEmbedUrlForRegisteredUserRequest
     AwsAccountId: AWS_ACC_ID,
     UserArn: userArn,
     // SessionLifetimeInMinutes: 100,  // Adjust as necessary within the allowed range
     ExperienceConfiguration: consoleExperienceConfiguration,
   };
-
+  
   try {
     const command = new GenerateEmbedUrlForRegisteredUserCommand(params);
     const response = await quicksight.send(command);
@@ -79,7 +85,6 @@ async function generateQuickSightURL(accessToken) {
 }
 
 module.exports = {
-  authUserToFetchAccessToken,
   getCognitoUserGroups,
   generateQuickSightURL,
 };
