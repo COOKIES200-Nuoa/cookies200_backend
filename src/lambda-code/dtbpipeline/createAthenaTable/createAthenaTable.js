@@ -10,9 +10,13 @@ const lambdaClient = new LambdaClient({ region: region });
 
 exports.createAthenaTable = async (event) => {
 
-    const databaseName = event.databaseName;
-    const tableName = event.tableName;
-    const dataSourceBucket = event.dataSourceBucket;
+    // const databaseName = event.databaseName;
+    // const tableName = event.tableName;
+    // const dataSourceBucket = event.dataSourceBucket;
+
+    const databaseName = process.env.DATABASE_NAME;
+    const tableName = process.env.TABLE_NAME;
+    const dataSourceBucket = process.env.DATA_BUCKET;
 
     const query = 
         `
@@ -36,7 +40,7 @@ exports.createAthenaTable = async (event) => {
 
         OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
 
-        LOCATION 's3://${dataSourceBucket}'
+        LOCATION 's3://${dataSourceBucket}/'
         
         TBLPROPERTIES ('classification' = 'parquet');
         `
@@ -99,6 +103,7 @@ async function waitForQuery(queryId) {
 };
 
 async function invokeUpdate() {
+    const datasetId = this.tryGetContext
     const payload = {datasetId: '179af5f2-bd5d-47f3-b325-fdfba4b9810b'}
 
     const invokeUpdate = new InvokeCommand({

@@ -6,7 +6,7 @@ exports.updateQS = async (event) => {
 
     const quicksightClient = new QuickSightClient({ region: region });
 
-    const datasetId = event.datasetId;
+    const datasetId = process.env.DATASET_ID;
     const timestamp = Date.now();
 
     const refreshParams = { 

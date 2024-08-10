@@ -91,7 +91,7 @@ export class AthenaQuickSightStack extends Stack {
       handler: 'updateQS.updateQS',
       role: athenaRole,
       environment: {
-        ATHENA_DATABASE_NAME: 'nuoa_database',
+        DATASET_ID: this.node.tryGetContext('datasetId'),
         ACCOUNT_ID: this.account,
         REGION: this.region,
       },
@@ -107,15 +107,14 @@ export class AthenaQuickSightStack extends Stack {
       environment: {
         ACCOUNT_ID: this.account,
         REGION: this.region,
-        DATABASE_NAME: 'nuoa_database',
+        DATABASE_NAME: this.node.tryGetContext('databaseName'),
+        TABLE_NAME: this.node.tryGetContext('tableName'),
+        DATA_BUCKET: this.node.tryGetContext('dataSourceBucket'),
         RESULT_BUCKET: athenaResultsBucket.bucketName,
         UPDATE_FUNC_ARN: updateQuickSightFunction.functionArn, 
       },
       timeout: Duration.minutes(1),
     });
-
-    // Grant permission to the first Lambda to invoke the second one
-    // updateQuickSightFunction.grantInvoke(createAthenaTablesFunction);
 
     // Outputs
     new CfnOutput(this, 'AthenaResultsBucketName', {
