@@ -12,7 +12,7 @@ export class AthenaQuickSightStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    // S3 Bucket for Athena query results - anh Binh check giup em co can khong nhe. Em khong ro logic cho nay
+    // // S3 Bucket for Athena query results - anh Binh check giup em co can khong nhe. Em khong ro logic cho nay
     const athenaResultsBucket = new s3.Bucket(this, 'AthenaResultsBucket', {
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,

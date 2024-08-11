@@ -1,9 +1,9 @@
 import { App, Stack } from "aws-cdk-lib";
-import { QuickSightOnboardingStack } from "../src/lib/onboarding_stack";
+import { QuickSightOnboardingStack } from "../../src/lib/onboarding_stack";
 import { Template } from "aws-cdk-lib/assertions";
-import { CognitoStack } from "../src/lib/cognito_stack";
+import { CognitoStack } from "../../src/lib/cognito_stack";
 
-jest.mock("../src/lib/cognito_stack", () => {
+jest.mock("../../src/lib/cognito_stack", () => {
   const mockUserPool = { userPoolId: "mockedUserPoolId" };
 
   return {

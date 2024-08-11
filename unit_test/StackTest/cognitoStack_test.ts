@@ -1,6 +1,6 @@
 import { App } from 'aws-cdk-lib';
 import { Capture, Match, Template } from 'aws-cdk-lib/assertions';
-import { CognitoStack } from '../src/lib/cognito_stack'; 
+import { CognitoStack } from '../../src/lib/cognito_stack'; 
 
   describe('CognitoStack', () => {
     const app = new App();
@@ -108,46 +108,4 @@ import { CognitoStack } from '../src/lib/cognito_stack';
     const capturedRoleRef = authenticatedRoleCapture.asObject().Ref; // Extract role's logical ID from captured value
     expect(capturedRoleRef).toMatch(/^NuoaAuthRole[A-Za-z0-9]+$/); // Determine that the captured logical ID ref matches expected pattern
   });
-
-  // test('Lambda Execution Role Created', () => {
-  //   // Check the Lambda execution IAM role creation
-  //   template.hasResourceProperties('AWS::IAM::Role', {
-  //     AssumeRolePolicyDocument: {
-  //       Version: '2012-10-17',
-  //       Statement: [
-  //         {
-  //           Effect: 'Allow',
-  //           Principal: {
-  //             Service: 'lambda.amazonaws.com',
-  //           },
-  //           Action: 'sts:AssumeRole',
-  //         },
-  //       ],
-  //     },
-  //   });
-
-  //   // Check the IAM policy attached to the Lambda execution role
-  //   template.hasResourceProperties('AWS::IAM::Policy', {
-  //     PolicyDocument: {
-  //       Version: '2012-10-17',
-  //       Statement: [
-  //         {
-  //           Effect: 'Allow',
-  //           Action: [
-  //             'quicksight:*',
-  //             'cognito-idp:AdminCreateUser',
-  //             'cognito-idp:AdminAddUserToGroup',
-  //           ],
-  //           Resource: '*', // Ensure this is a string, not an array
-  //         },
-  //       ],
-  //     },
-  //     Roles: [
-  //       {
-  //         Ref: Match.stringLikeRegexp('NuoaLambdaExecutionRole.*'),
-  //       },
-  //     ],
-  //   });
-  // });
-  // more unit tests added in the future
 });

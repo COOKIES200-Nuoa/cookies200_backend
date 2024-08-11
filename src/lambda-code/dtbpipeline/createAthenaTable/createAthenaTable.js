@@ -103,14 +103,11 @@ async function waitForQuery(queryId) {
 };
 
 async function invokeUpdate() {
-    const datasetId = this.tryGetContext
-    const payload = {datasetId: '179af5f2-bd5d-47f3-b325-fdfba4b9810b'}
 
     const invokeUpdate = new InvokeCommand({
         FunctionName: updateFunctionArn,
         InvocationType: 'RequestResponse',
         LogType: 'Tail',
-        Payload: JSON.stringify(payload),
     });
     try {
         const lambdaClientRes = await lambdaClient.send(invokeUpdate);
@@ -119,10 +116,10 @@ async function invokeUpdate() {
         if (lambdaClientRes.StatusCode === 200) {
             console.log('Update Quicksight dataset lambda function invoked');
         } else {
-            console.log('Update Quicksight dataset lambda function invocation failed')
+            console.log('Update Quicksight dataset lambda function invocation failed');
         }
     } catch (error) {
         console.error("Error invoking QuickSight update function", error);
         throw error;
-    };
-};
+    }
+}
