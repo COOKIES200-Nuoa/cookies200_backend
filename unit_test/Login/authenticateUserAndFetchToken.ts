@@ -10,7 +10,7 @@ const { authenticateUserAndFetchToken } = require('../../src/lambda-code/Login/a
 describe('authenticateUserAndFetchToken', () => {
   const cognitoMock = mockClient(CognitoIdentityProviderClient);
   const mockEvent = {
-    body: JSON.stringify({
+    body: JSON.stringify({ 
       username: 'testuser',
       password: 'testpassword',
       newPassword: 'newpassword'

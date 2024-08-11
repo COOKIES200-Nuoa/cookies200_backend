@@ -45,7 +45,10 @@ test("GenerateQSUrlStack creates necessary resources", () => {
     PolicyDocument: {
       Statement: Match.arrayWith([
         Match.objectLike({
-          Action: "quicksight:GenerateEmbedUrlForRegisteredUser",
+          Action: [
+            "quicksight:GenerateEmbedUrlForRegisteredUser",
+            "quicksight:DescribeUser",
+          ],
           Effect: "Allow",
           Resource: "*",
         }),
@@ -80,7 +83,11 @@ test("GenerateQSUrlStack creates necessary resources", () => {
             {
               Ref: "AWS::Partition",
             },
-            ":apigateway:ap-southeast-1:lambda:path/2015-03-31/functions/",
+            ":apigateway:",
+            {
+              Ref: "AWS::Region",
+            },
+            ":lambda:path/2015-03-31/functions/",
             {
               "Fn::GetAtt": ["BackendHandler4504EC6C", "Arn"],
             },
