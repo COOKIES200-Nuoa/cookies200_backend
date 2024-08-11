@@ -151,11 +151,10 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
                 // Grant permissions to tenant's namespace
                 Principal: `arn:aws:quicksight:${getEnv().region}:${getEnv().awsAccountId}:namespace/${tenant}`,
                 Actions: [
-                    'quicksight:DescribeDashboard',
-                    'quicksight:ListDashboardVersions',
-                    'quicksight:QueryDashboard',
-                ] 
-            }
+                    "quicksight:QueryAnalysis", 
+                    "quicksight:DescribeAnalysis", 
+                ]
+            },
         ]
     };
 

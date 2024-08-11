@@ -10,10 +10,6 @@ const lambdaClient = new LambdaClient({ region: region });
 
 exports.createAthenaTable = async (event) => {
 
-    // const databaseName = event.databaseName;
-    // const tableName = event.tableName;
-    // const dataSourceBucket = event.dataSourceBucket;
-
     const databaseName = process.env.DATABASE_NAME;
     const tableName = process.env.TABLE_NAME;
     const dataSourceBucket = process.env.DATA_BUCKET;
@@ -55,7 +51,8 @@ exports.createAthenaTable = async (event) => {
     try {
         const athenaClientRes = await athenaClient.send(queryExecutionCommand);
         const queryId = athenaClientRes.QueryExecutionId;
-        await waitForQuery(queryId);
+        const result = await waitForQuery(queryId);
+        return result;
     } catch (err) {
         console.error(`Error executing query: ${query}`, err);
         throw err;
@@ -75,7 +72,6 @@ async function waitForQuery(queryId) {
         try {
             const queryStatusRes = await athenaClient.send(getQueryCommand);
             const queryStatus = queryStatusRes.QueryExecution.Status.State;
-
             console.log(`Query status: ${queryStatus}`);
 
             if (queryStatus === 'SUCCEEDED') {

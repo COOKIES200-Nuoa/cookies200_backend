@@ -38,5 +38,6 @@ exports.updateQS = async (event) => {
         }
     } catch (error) {
         console.error(`Failed to refresh dataset ${datasetId} due to ${error}`);
+        throw error;
     }
 };
