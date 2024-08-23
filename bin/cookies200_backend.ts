@@ -8,6 +8,7 @@ import { QuickSightOnboardingStack } from "../src/lib/onboarding_stack";
 import { DynamoDBExportStack } from "../src/lib/database_stack";
 import { GlueStack } from "../src/lib/glueJob_stack";
 import { AthenaQuickSightStack } from "../src/lib/athenaQS_stack";
+import { GluePipelineStack } from "../src/lib/gluePipeline_stack"
 
 const app = new cdk.App();
 
@@ -72,6 +73,8 @@ const athenaQSStack = new AthenaQuickSightStack(
 
 new DynamoDBExportStack(app, 'DynamoDBExportStack');
 new GlueStack(app, 'GlueStack');
+
+new GluePipelineStack(app, 'GluePipelineStack');
 
 
 app.synth();
