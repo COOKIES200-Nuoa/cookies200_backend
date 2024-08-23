@@ -19,50 +19,67 @@ export class GluePipelineStack extends Stack {
     // Import existing S3 bucket
     const outputBucket = s3.Bucket.fromBucketName(this, 'OutputBucket', 'nuoadatabasetest');
 
+    // Glue IAM Role
     const glueRole = new iam.Role(this, 'GlueRole', {
-        assumedBy: new iam.ServicePrincipal('glue.amazonaws.com'),
-        managedPolicies: [
-          iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSGlueServiceRole'),
-        ],
-      });
-  
-      // Add the necessary permissions for DynamoDB
-      glueRole.addToPolicy(new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: [
-          'dynamodb:DescribeTable',
-          'dynamodb:Scan',
-          'dynamodb:Query',
-        ],
-        resources: [
-          ActivityTable_dev.tableArn,
-          EntityTable_dev.tableArn,
-        ],
-      }));
+      assumedBy: new iam.ServicePrincipal('glue.amazonaws.com'),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSGlueServiceRole'),
+      ],
+    });
 
-    // Glue Crawlers
-    const crawlerA = new glue.CfnCrawler(this, 'ActivityCrawler', {
+    const gluePolicy = new iam.Policy(this, 'GlueRolePolicy', {
+        policyName: 'GlueRolePolicy',
+        roles: [glueRole],
+        statements: [
+            new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            actions: [
+                'dynamodb:DescribeTable',
+                'dynamodb:Scan',
+                'dynamodb:Query',
+            ],
+            resources: [
+                ActivityTable_dev.tableArn,
+                EntityTable_dev.tableArn,
+            ],
+            }),
+        ],
+        });
+
+    // Add full S3 access to the Glue role
+    glueRole.addToPolicy(new iam.PolicyStatement({
+    effect: iam.Effect.ALLOW,
+    actions: [
+        's3:GetObject',
+        's3:PutObject',
+        's3:ListBucket',
+    ],
+    resources: [
+        `${outputBucket.bucketArn}/*`, 
+        outputBucket.bucketArn,
+    ],
+    }));
+
+    // Create a single Glue Crawler to crawl both DynamoDB tables
+    const crawler = new glue.CfnCrawler(this, 'DynamoDBCrawler', {
       role: glueRole.roleArn,
-      databaseName: 'activity_db',
+      databaseName: 'dynamodb_db',
       targets: {
-        dynamoDbTargets: [{ path: ActivityTable_dev.tableName }],
+        dynamoDbTargets: [
+          { path: ActivityTable_dev.tableName },
+          { path: EntityTable_dev.tableName },
+        ],
       },
     });
 
-    const crawlerB = new glue.CfnCrawler(this, 'EntityCrawler', {
-      role: glueRole.roleArn,
-      databaseName: 'entity_db',
-      targets: {
-        dynamoDbTargets: [{ path: EntityTable_dev.tableName }],
-      },
-    });
+    crawler.node.addDependency(gluePolicy);
 
     // Glue Job
     const glueJob = new glue.CfnJob(this, 'GlueJob', {
       role: glueRole.roleArn,
       command: {
-        name: 'join_glue',
-        scriptLocation: 's3://nuoadatabasetest/glue__job.py', 
+        name: 'glueetl',
+        scriptLocation: 's3://nuoadatabasetest/glue__job.py',
         pythonVersion: '3',
       },
       defaultArguments: {
@@ -72,6 +89,9 @@ export class GluePipelineStack extends Stack {
       maxRetries: 1,
       glueVersion: '4.0',
     });
+
+    // Glue job runs after crawler
+    glueJob.addDependency(crawler);
 
     // Lambda to Trigger Glue Job
     const triggerGlueJobLambda = new lambda.Function(this, 'TriggerGlueJobLambda', {
