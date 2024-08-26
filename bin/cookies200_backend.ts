@@ -2,6 +2,7 @@
 import "source-map-support/register";
 import * as cdk from "aws-cdk-lib";
 import { AuthStack } from "../src/lib/auth_stack";
+import { LogoutStack } from "../src/lib/logout_stack";
 import { GenerateQSUrlStack } from "../src/lib/generateQSUrl_stack";
 import { CognitoStack } from "../src/lib/cognito_stack";
 import { QuickSightOnboardingStack } from "../src/lib/onboarding_stack";
@@ -36,6 +37,19 @@ const onboardingStack = new QuickSightOnboardingStack(
 const authStack = new AuthStack(
   app,
   "AuthStack",
+  cognitoStack.userPool,
+  cognitoStack.userPoolClientId,
+  {
+    env: {
+      account: process.env.CDK_DEFAULT_ACCOUNT,
+      region: process.env.CDK_DEFAULT_REGION,
+    },
+  }
+);
+
+const logoutStack = new LogoutStack(
+  app,
+  "LogoutStack",
   cognitoStack.userPool,
   cognitoStack.userPoolClientId,
   {
