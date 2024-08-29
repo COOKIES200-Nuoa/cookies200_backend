@@ -1,9 +1,14 @@
 {
   "app": "npx ts-node --prefer-ts-exts bin/cookies200_backend.ts",  
   "context": {
-    "databaseName": "nuoa_joinedtable_test",
-    "tableName": "lambda_nuoa_joinedtable_test",
-    "dataSourceBucket": "processed-nuoa-joinedtable-dev",
-    "datasetId": "179af5f2-bd5d-47f3-b325-fdfba4b9810b"
+    "adminId":"admin_ncbinh",
+    "activityTableName": "ActivityTable_dev",
+    "entityTableName": "EntityTable_dev",
+    "catalogName": "AwsDataCatalog",
+    "databaseName": "processed_db",
+    "tableName": "data",
+    "dataSourceBucket": "nuoadatabasetest",
+    "datasetId": "nuoa-joined-dataset",
+    "datasetName": "Nuoa Joined Dataset"
   }
 }

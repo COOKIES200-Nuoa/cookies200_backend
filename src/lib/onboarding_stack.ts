@@ -6,7 +6,8 @@ import {
     aws_cloudtrail as cloudtrail,
 } from 'aws-cdk-lib';
 import { Construct } from "constructs";
-import { Stack, StackProps, Duration } from "aws-cdk-lib";
+import { Stack, StackProps, Duration, Fn } from "aws-cdk-lib";
+import { QuickSightDataStack } from './quicksightData_stack';
 
 export class QuickSightOnboardingStack extends Stack {
 
@@ -19,6 +20,8 @@ export class QuickSightOnboardingStack extends Stack {
         props?: StackProps,
     ) {
         super(scope, id, props);
+        // Import Dataset ARN
+        const datasetArn = Fn.importValue('DatasetArn');
 
     // ========= Creating lambda function =========
         const lambdaRole = new iam.Role(this, "NuoaLambdaExecutionRole", {
@@ -131,12 +134,12 @@ export class QuickSightOnboardingStack extends Stack {
             environment: {
             REGION: this.region,
             AWS_ACC_ID: this.account,
-            QUICKSIGHT_ADMIN_ID: 'Cookies200',
+            QUICKSIGHT_ADMIN_ID: this.node.tryGetContext('adminId'),
             USER_POOL_ID: userPool.userPoolId,
             IDPOOL_ID: identityPoolId,
             USER_POOL_CLIENT_ID: userPoolClientId,
             AUTH_ROLE_ARN: nuoaAuthRoleArn,
-            DATASET: 'bc93b225-e6f7-4664-8331-99e66f5b7841', // Place holder dataset
+            DATASET: this.node.tryGetContext('datasetId'),
             },
             timeout: Duration.minutes(1),
         });

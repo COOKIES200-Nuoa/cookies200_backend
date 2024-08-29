@@ -10,35 +10,17 @@ const lambdaClient = new LambdaClient({ region: region });
 
 exports.createAthenaTable = async (event) => {
 
+    const catalogName = process.env.CATALOG_NAME;
     const databaseName = process.env.DATABASE_NAME;
     const tableName = process.env.TABLE_NAME;
     const dataSourceBucket = process.env.DATA_BUCKET;
 
     const query = 
         `
-        CREATE EXTERNAL TABLE IF NOT EXISTS ${databaseName}.${tableName} (
-            tenantactivitykey string,
-            activityid string,
-            emissioninkgco2 bigint,
-            emissioninkgco2_forlocationbased bigint,
-            emissioninkgco2_formarketbased bigint,
-            tenantentitykey string,
-            entityid string,
-            tenantid string,
-            name string,
-            parentid string,
-            parentContributionPercentage int,
-            lastupdatedat timestamp
-        )
-        ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
-
-        STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat' 
-
-        OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
-
-        LOCATION 's3://${dataSourceBucket}/'
-        
-        TBLPROPERTIES ('classification' = 'parquet');
+        CREATE OR REPLACE VIEW latest_partition_data AS
+        SELECT * 
+        FROM data
+        WHERE partition_0 = (SELECT partition_0 FROM "${catalogName}"."${databaseName}"."${tableName}" ORDER BY partition_0 DESC LIMIT 1);
         `
     ;
 
