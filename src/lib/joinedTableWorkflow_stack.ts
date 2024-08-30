@@ -18,8 +18,8 @@ export class JoinedTableWorkFlowStack extends Stack {
         const entityTableName = this.node.tryGetContext('entityTableName');
 
         // Import existing DynamoDB tables
-        const ActivityTable_dev = dynamodb.Table.fromTableArn(this, activityTableName, `arn:aws:dynamodb:ap-southeast-1:203903977784:table/${activityTableName}`);
-        const EntityTable_dev = dynamodb.Table.fromTableArn(this, entityTableName, `arn:aws:dynamodb:ap-southeast-1:203903977784:table/${entityTableName}`);
+        const ActivityTable_Nuoa = dynamodb.Table.fromTableArn(this, activityTableName, `arn:aws:dynamodb:ap-southeast-1:203903977784:table/${activityTableName}`);
+        const EntityTable_Nuoa = dynamodb.Table.fromTableArn(this, entityTableName, `arn:aws:dynamodb:ap-southeast-1:203903977784:table/${entityTableName}`);
 
         // Get name of source bucket and source table
         const dataSourceBucket = this.node.tryGetContext('dataSourceBucket');
@@ -52,8 +52,8 @@ export class JoinedTableWorkFlowStack extends Stack {
                     'dynamodb:Query',
                 ],
                 resources: [
-                    ActivityTable_dev.tableArn,
-                    EntityTable_dev.tableArn,
+                    ActivityTable_Nuoa.tableArn,
+                    EntityTable_Nuoa.tableArn,
                 ],
                 }),
             ],
@@ -80,8 +80,8 @@ export class JoinedTableWorkFlowStack extends Stack {
             databaseName: 'dynamodb_db',
             targets: {
                 dynamoDbTargets: [
-                    { path: ActivityTable_dev.tableName },
-                    { path: EntityTable_dev.tableName },
+                    { path: ActivityTable_Nuoa.tableName },
+                    { path: EntityTable_Nuoa.tableName },
                 ],
             },
         });
@@ -99,6 +99,8 @@ export class JoinedTableWorkFlowStack extends Stack {
             defaultArguments: {
                 '--TempDir': outputBucket.s3UrlForObject('temp/'),
                 '--output_path': outputBucket.s3UrlForObject(`${dataSourceTable}/`),
+                '--activity_table': activityTableName, 
+                '--entity_table': entityTableName,     
             },
             maxRetries: 1,
             glueVersion: '4.0'
