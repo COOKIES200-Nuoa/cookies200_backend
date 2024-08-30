@@ -46,9 +46,9 @@ activity_table_flattened = activity_table.apply_mapping([
     ('data.fuelUnit', 'string', 'fuelunit', 'string'),
     ('data.period', 'string', 'period', 'string'),
     ('data.scope', 'string', 'scope', 'string'),
-    ('emissioninkgco2', 'bigint', 'emissioninkgco2', 'bigint'),
-    ('emissioninkgco2_forlocationbased', 'bigint', 'emissioninkgco2_forlocationbased', 'bigint'),
-    ('emissioninkgco2_formarketbased', 'bigint', 'emissioninkgco2_formarketbased', 'bigint'),
+    ('emissioninkgco2', 'double', 'emissioninkgco2', 'double'),
+    ('emissioninkgco2_forlocationbased', 'double', 'emissioninkgco2_forlocationbased', 'double'),
+    ('emissioninkgco2_formarketbased', 'double', 'emissioninkgco2_formarketbased', 'double'),
     ('entityid', 'string', 'entityid', 'string'),
     ('formid', 'string', 'formid', 'string'),
     ('tenantid', 'string', 'tenantid', 'string')
@@ -70,7 +70,7 @@ entity_table_flattened = entity_table.apply_mapping([
     ('data.ownershipPercentage', 'string', 'ownershippercentage', 'string'),
     ('data.province', 'string', 'province', 'string'),
     ('name', 'string', 'name', 'string'),
-    ('parentcontributionpercentage', 'string', 'parentcontributionpercentage', 'int'),
+    ('parentcontributionpercentage', 'double', 'parentcontributionpercentage', 'double'),
     ('parententityid', 'string', 'parententityid', 'string')
 ], transformation_ctx="entity_table_flattened")
 
