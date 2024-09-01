@@ -62,7 +62,6 @@ const generateQSUrlStack = new GenerateQSUrlStack(
 const joinedTableWorkflowStack = new JoinedTableWorkFlowStack(
   app,
   'JoinedTableWorkFlowStack',
-  'JoinedTableWorkFlowStack',
   {
     env: {
       account: process.env.CDK_DEFAULT_ACCOUNT,
@@ -71,16 +70,16 @@ const joinedTableWorkflowStack = new JoinedTableWorkFlowStack(
   }
 );
 
-// const quicksightDataStack = new QuickSightDataStack(
-//   app,
-//   'QuickSightDataStack',
-//   {
-//     env: {
-//       account: process.env.CDK_DEFAULT_ACCOUNT,
-//       region: process.env.CDK_DEFAULT_REGION,
-//     },
-//   }
-// );
+const quicksightDataStack = new QuickSightDataStack(
+  app,
+  'QuickSightDataStack',
+  {
+    env: {
+      account: process.env.CDK_DEFAULT_ACCOUNT,
+      region: process.env.CDK_DEFAULT_REGION,
+    },
+  }
+);
 
 const athenaQSStack = new AthenaQuickSightStack(
   app, 
