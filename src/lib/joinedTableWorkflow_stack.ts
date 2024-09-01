@@ -84,6 +84,9 @@ export class JoinedTableWorkFlowStack extends Stack {
                     { path: EntityTable_dev.tableName },
                 ],
             },
+            recrawlPolicy: {
+                recrawlBehavior: 'CRAWL_EVERYTHING'
+            },
         });
         dynamoDBCrawler.node.addDependency(glue_joinJobPolicy);
 
@@ -138,7 +141,7 @@ export class JoinedTableWorkFlowStack extends Stack {
         });
         parquetTableCrawler.node.addDependency(parquetTableCrawlPolicy);
 
-        // Create work flow
+    // ======================================= Creating Glue workflow =========================================
         const glue_workflow = new glue.CfnWorkflow(this, "glue-workflow", {
             name: "glue-workflow",
             description:

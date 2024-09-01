@@ -1,14 +1,20 @@
-const { QuickSightClient, CreateIngestionCommand } = require("@aws-sdk/client-quicksight");
+const { 
+    QuickSightClient, 
+    CreateIngestionCommand 
+} = require("@aws-sdk/client-quicksight");
+
+// Region and AWS Account ID
+const region = process.env.REGION;
+const account = process.env.ACCOUNT_ID
+
+// AWS-SDK Client
+const quicksightClient = new QuickSightClient({ region: region });
 
 exports.updateQS = async (event) => {
-    const region = process.env.REGION;
-    const account = process.env.ACCOUNT_ID
-
-    const quicksightClient = new QuickSightClient({ region: region });
-
     const datasetId = process.env.DATASET_ID;
     const timestamp = Date.now();
 
+    // Params for Dataset Refresh Command
     const refreshParams = { 
         DataSetId: datasetId, 
         IngestionId: `refresh-${timestamp}`,
@@ -22,7 +28,6 @@ exports.updateQS = async (event) => {
         console.log('Refresh status ', refreshResponse.IngestionStatus);
         if(refreshResponse.IngestionStatus === "INITIALIZED") {
             console.log(`QuickSight dataset ${datasetId} update underway`);
-            
             return {
                 statusCode: 200,
                 body: `QuickSight dataset ${datasetId} update underway`
@@ -30,13 +35,16 @@ exports.updateQS = async (event) => {
         }
         else {
             console.log(`QuickSight dataset ${datasetId} updated failed to start`);
-            
             return {
                 statusCode: 400,
                 body: `QuickSight dataset ${datasetId} updated failed to start`,
             }
         }
     } catch (error) {
+        if (error.name === 'ResourceNotFoundException') {
+            
+            return;
+        }
         console.error(`Failed to refresh dataset ${datasetId} due to ${error}`);
         throw error;
     }

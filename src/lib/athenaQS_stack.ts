@@ -18,6 +18,7 @@ export class AthenaQuickSightStack extends Stack {
 
     // Import name of final crawler of Glue Workflow
     const parquetTableCrawlerName = Fn.importValue('ParquetTableCrawlerName');
+    const createQSDataFuncArn = Fn.importValue('QuicksightDatasetFunctionArn');
 
     // Rule that trigger Athena Query lambda
     const athenaTriggerRule = new events.Rule(this, 'Athena_lambda_trigger_rule', {
@@ -110,7 +111,6 @@ export class AthenaQuickSightStack extends Stack {
       handler: 'updateQS.updateQS',
       role: athenaRole,
       environment: {
-        DATASET_ID: this.node.tryGetContext('datasetId'),
         ACCOUNT_ID: this.account,
         REGION: this.region,
       },
@@ -130,8 +130,10 @@ export class AthenaQuickSightStack extends Stack {
         DATABASE_NAME: this.node.tryGetContext('databaseName'),
         TABLE_NAME: this.node.tryGetContext('tableName'),
         DATA_BUCKET: this.node.tryGetContext('dataSourceBucket'),
+        DATASET_ID: this.node.tryGetContext('datasetId'),
         RESULT_BUCKET: athenaResultsBucket.bucketName,
         UPDATE_FUNC_ARN: updateQuickSightFunction.functionArn, 
+        QUICKSIGHT_DATASET_FUNC_ARN: createQSDataFuncArn,
       },
       timeout: Duration.minutes(1),
     });

@@ -6,8 +6,11 @@
     "entityTableName": "EntityTable_dev",
     "catalogName": "AwsDataCatalog",
     "databaseName": "processed_db",
+    "latestPartitionTableName": "latest_partition_data",
     "tableName": "data",
     "dataSourceBucket": "nuoadatabasetest",
+    "dataSourceId": "NuoaEmissionDataSource",
+    "dataSourceName": "Nuoa Emission Data Source",
     "datasetId": "nuoa-joined-dataset",
     "datasetName": "Nuoa Joined Dataset"
   }

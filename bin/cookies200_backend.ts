@@ -64,7 +64,7 @@ const generateQSUrlStack = new GenerateQSUrlStack(
 
 const joinedTableWorkflowStack = new JoinedTableWorkFlowStack(
   app,
-  'JoinedTableWorkflowStack',
+  'JoinedTableWorkFlowStack',
   {
     env: {
       account: process.env.CDK_DEFAULT_ACCOUNT,
@@ -105,6 +105,7 @@ new GluePipelineStack(app, 'GluePipelineStack');
 
 // Add depencies between stacks
 athenaQSStack.addDependency(joinedTableWorkflowStack);
+athenaQSStack.addDependency(quicksightDataStack);
 onboardingStack.addDependency(quicksightDataStack);
 
 app.synth();
