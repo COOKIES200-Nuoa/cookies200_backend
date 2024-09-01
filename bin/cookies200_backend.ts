@@ -5,11 +5,8 @@ import { AuthStack } from "../src/lib/auth_stack";
 import { GenerateQSUrlStack } from "../src/lib/generateQSUrl_stack";
 import { CognitoStack } from "../src/lib/cognito_stack";
 import { QuickSightOnboardingStack } from "../src/lib/onboarding_stack";
-import { DynamoDBExportStack } from "../src/lib/database_stack";
-import { GlueStack } from "../src/lib/glueJob_stack";
 import { AthenaQuickSightStack } from "../src/lib/athenaQS_stack";
 import { QuickSightDataStack } from "../src/lib/quicksightData_stack";
-import { GluePipelineStack } from "../src/lib/gluePipeline_stack";
 import { JoinedTableWorkFlowStack } from "../src/lib/joinedTableWorkflow_stack";
 
 const app = new cdk.App();
@@ -65,6 +62,7 @@ const generateQSUrlStack = new GenerateQSUrlStack(
 const joinedTableWorkflowStack = new JoinedTableWorkFlowStack(
   app,
   'JoinedTableWorkFlowStack',
+  'JoinedTableWorkFlowStack',
   {
     env: {
       account: process.env.CDK_DEFAULT_ACCOUNT,
@@ -73,16 +71,16 @@ const joinedTableWorkflowStack = new JoinedTableWorkFlowStack(
   }
 );
 
-const quicksightDataStack = new QuickSightDataStack(
-  app,
-  'QuickSightDataStack',
-  {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
-  }
-);
+// const quicksightDataStack = new QuickSightDataStack(
+//   app,
+//   'QuickSightDataStack',
+//   {
+//     env: {
+//       account: process.env.CDK_DEFAULT_ACCOUNT,
+//       region: process.env.CDK_DEFAULT_REGION,
+//     },
+//   }
+// );
 
 const athenaQSStack = new AthenaQuickSightStack(
   app, 
@@ -94,14 +92,6 @@ const athenaQSStack = new AthenaQuickSightStack(
     },
   }
 );
-
-const dynamodbExportStack = new DynamoDBExportStack(
-  app, 
-  'DynamoDBExportStack'
-);
-new GlueStack(app, 'GlueStack');
-
-new GluePipelineStack(app, 'GluePipelineStack');
 
 // Add depencies between stacks
 athenaQSStack.addDependency(joinedTableWorkflowStack);
