@@ -58,10 +58,12 @@ async function waitForQuery(queryId) {
             const queryStatus = queryStatusRes.QueryExecution.Status.State;
             console.log(`Query status: ${queryStatus}`);
             if (queryStatus === 'SUCCEEDED') { // Query succeeded
-                let datasetExists = await checkDataset();
+                let datasetExists = await checkDataset(); // Check if Dataset exist
                 if (datasetExists === true) {
+                    console.log("Dataset exist, invoking update");
                     await invokeUpdate(updateFunctionArn); // Dataset exists, invoke create dataset function
-                } else {
+                } else if (datasetExists === false) {
+                    console.log("Dataset doesn't exist yet, creating dataset");
                     await invokeUpdate(quicksightDataSetFuncArn); // Dataset doesn't exists, invoke create dataset function
                 }
                 return {
@@ -112,7 +114,11 @@ async function checkDataset() {
     });
     try {
         const response = await quickSightClient.send(describeDataSet);
-        return datasetExists = true;   
+        console.log("Check dataset response:", response.Status);
+        if (response.Status === 200)
+            return datasetExists = true;   
+        else
+            return datasetExists = false;
     } catch (error) {
         if (error.name === 'ResourceNotFoundException') {
             return datasetExists = false;

@@ -75,6 +75,8 @@ export class AthenaQuickSightStack extends Stack {
         'glue:GetDatabase',
         'glue:CreateTable',
         'glue:GetTable',
+        'glue:UpdateTable',
+        'quicksight:DescribeDataSet',
         'quicksight:CreateIngestion'
       ],
       resources: ['*'],
@@ -113,6 +115,7 @@ export class AthenaQuickSightStack extends Stack {
       environment: {
         ACCOUNT_ID: this.account,
         REGION: this.region,
+        DATASET_ID: this.node.tryGetContext('datasetId'),
       },
       timeout: Duration.minutes(1),
     });

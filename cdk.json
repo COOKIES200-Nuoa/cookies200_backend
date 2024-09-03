@@ -12,6 +12,7 @@
     "dataSourceId": "NuoaEmissionDataSource",
     "dataSourceName": "Nuoa Emission Data Source",
     "datasetId": "nuoa-joined-dataset",
-    "datasetName": "Nuoa Joined Dataset"
+    "datasetName": "Nuoa Joined Dataset",
+    "rlsTableName": "RowLevelSecurity_Nuoa"
   }
 }

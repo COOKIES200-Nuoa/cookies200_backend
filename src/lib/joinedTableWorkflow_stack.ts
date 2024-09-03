@@ -5,7 +5,7 @@ import{
     aws_events_targets as targets,
     aws_dynamodb as dynamodb,
     aws_s3 as s3
-} from 'aws-cdk-lib'
+} from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { Stack, StackProps, CfnOutput} from 'aws-cdk-lib';
 
@@ -16,10 +16,12 @@ export class JoinedTableWorkFlowStack extends Stack {
          // Get name of dynamodb tables from cdk.json
         const activityTableName = this.node.tryGetContext('activityTableName');
         const entityTableName = this.node.tryGetContext('entityTableName');
+        const rlsTableName = this.node.tryGetContext('rlsTableName');
 
         // Import existing DynamoDB tables
         const ActivityTable_Nuoa = dynamodb.Table.fromTableArn(this, activityTableName, `arn:aws:dynamodb:ap-southeast-1:203903977784:table/${activityTableName}`);
         const EntityTable_Nuoa = dynamodb.Table.fromTableArn(this, entityTableName, `arn:aws:dynamodb:ap-southeast-1:203903977784:table/${entityTableName}`);
+        const RLS_Table_Nuoa = dynamodb.Table.fromTableArn(this, rlsTableName, `arn:aws:dynamodb:ap-southeast-1:203903977784:table/${rlsTableName}`);
 
         // Get name of source bucket and source table
         const dataSourceBucket = this.node.tryGetContext('dataSourceBucket');
@@ -39,7 +41,7 @@ export class JoinedTableWorkFlowStack extends Stack {
             ],
         });
   
-      // Glue IAM Policy
+        // Glue IAM Policy
         const glue_joinJobPolicy = new iam.Policy(this, 'Glue_joinJobPolicy', {
             policyName: 'GlueRolePolicy',
             roles: [glueRole],
@@ -73,7 +75,7 @@ export class JoinedTableWorkFlowStack extends Stack {
             ],
         }));
 
-        // Create a single Glue Crawler to crawl both DynamoDB tables
+        // Create a single Glue Crawler to crawl Activity and Entity Table as well as RLS Table
         const dynamoDBCrawler = new glue.CfnCrawler(this, 'DynamoDBCrawler', {
             name:'dynamodb_db_crawler',
             role: glueRole.roleArn,
@@ -147,7 +149,7 @@ export class JoinedTableWorkFlowStack extends Stack {
         const glue_workflow = new glue.CfnWorkflow(this, "glue-workflow", {
             name: "glue-workflow",
             description:
-            "ETL workflow to convert CSV to parquet and then load into Redshift",
+            "ETL workflow to convert DynamoDB tables to parquet and then load into Quicksight",
         });
 
         // Create triggers

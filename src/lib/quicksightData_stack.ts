@@ -6,7 +6,6 @@ import {
 } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { Stack, StackProps, CfnOutput} from 'aws-cdk-lib';
-import { CfnTemplate } from 'aws-cdk-lib/aws-quicksight';
 
 export class QuickSightDataStack extends Stack {
     constructor(scope: Construct, id: string, props?: StackProps) {

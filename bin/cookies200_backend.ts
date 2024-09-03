@@ -8,7 +8,7 @@ import { QuickSightOnboardingStack } from "../src/lib/onboarding_stack";
 import { AthenaQuickSightStack } from "../src/lib/athenaQS_stack";
 import { QuickSightDataStack } from "../src/lib/quicksightData_stack";
 import { JoinedTableWorkFlowStack } from "../src/lib/joinedTableWorkflow_stack";
-
+import { RLSTableStack } from "../src/lib/rls_dynamodbTable_stack";
 const app = new cdk.App();
 
 const cognitoStack = new CognitoStack(app, "CognitoStack", {
@@ -84,6 +84,17 @@ const quicksightDataStack = new QuickSightDataStack(
 const athenaQSStack = new AthenaQuickSightStack(
   app, 
   'AthenaQuickSightStack',
+  {
+    env: {
+      account: process.env.CDK_DEFAULT_ACCOUNT,
+      region: process.env.CDK_DEFAULT_REGION,
+    },
+  }
+);
+
+const rls_dynamodbTable_stack = new RLSTableStack(
+  app,
+  'RLSTableStack',
   {
     env: {
       account: process.env.CDK_DEFAULT_ACCOUNT,

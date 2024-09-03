@@ -13,6 +13,7 @@ const createDataSet = createQuickSightResource('Dataset', CreateDataSetCommand);
 exports.createQuicksightDataset = async (event) => {
     const quicksightClient = new QuickSightClient({});
 
+    // Environmental Variables
     const awsAccountId = process.env.AWS_ACC_ID;
     const region = process.env.REGION;
     const adminId = process.env.ADMIN_ID;
@@ -20,11 +21,11 @@ exports.createQuicksightDataset = async (event) => {
     const dataSourceName = process.env.DATASOURCE_NAME;
     const datasetId = process.env.DATASET_ID;
     const datasetName = process.env.DATASET_NAME;
-
     const catalogName = process.env.CATALOG_NAME;
     const databaseName = process.env.DATABASE_NAME;
     const latest_partition_table_name = process.env.LATEST_PARTITION_TABLE_NAME;
 
+    // Create Datasource Params
     const createDataSourceParams = {
         AwsAccountId: awsAccountId,
         DataSourceId: dataSourceId,
@@ -50,6 +51,7 @@ exports.createQuicksightDataset = async (event) => {
         ]
     };
 
+    // Create Dataset Params
     const createDatasetParams = {
         AwsAccountId: awsAccountId,
         DataSetId: datasetId,
