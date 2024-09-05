@@ -4,6 +4,7 @@ import {
     aws_iam as iam,
     aws_s3 as s3,
     aws_athena as athena,
+    aws_sam as sam
 } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { Stack, StackProps, RemovalPolicy, Duration, CfnOutput, Fn } from 'aws-cdk-lib';
@@ -26,41 +27,38 @@ export class RLSTableStack extends Stack {
             removalPolicy: RemovalPolicy.DESTROY,
         });
 
+        // Create Spillbucket
         const spillbucket = new s3.Bucket(this, 'SpillBucket', {
             bucketName: 'rls-spillbucket',
             autoDeleteObjects: true,
             removalPolicy: RemovalPolicy.DESTROY,
         })
 
+        // Create Outputbucket
         const outputBucket = new s3.Bucket(this, 'OutputBucket', {
             bucketName: 'rls-outputbucket',
             autoDeleteObjects: true,
             removalPolicy: RemovalPolicy.DESTROY,
         })
 
-        new athena.CfnWorkGroup(this, 'RLSWorkgroup', {
-            name: 'rlsWorkgroup',
-            recursiveDeleteOption: true,
-            workGroupConfiguration: {
-                resultConfiguration: {
-                    outputLocation: outputBucket.s3UrlForObject(),
-                },
-            }
-        })
-
         // Create DynamoDB Athena connector
-        const connector = lambda.Function.fromFunctionArn(
-            this, 
-            'ddbconnector', 
-            `arn:aws:lambda:${this.region}:${this.account}:function:ddbconnector`
-        );
-        console.log('Imported function: ', connector.functionArn);
+        new sam.CfnApplication(this, "AthenaToDynamoConnector", {
+            location: {
+                applicationId: "arn:aws:serverlessrepo:us-east-1:292517598671:applications/AthenaDynamoDBConnector",
+                semanticVersion: "2022.34.1"
+            },
+            parameters: {
+                AthenaCatalogName: "rls_catalog",
+                SpillBucket: spillbucket.bucketName
+            }
+        });
 
+        // Create Data Catalog for RLS Table
         new athena.CfnDataCatalog(this, 'rlsDatacatalog', {
             name: 'ddbconnector',
             type: 'LAMBDA',
             parameters: {
-                function: connector.functionArn,
+                function: 'arn:aws:lambda:ap-southeast-1:203903977784:function:rls_catalog',
             },
         });
 
@@ -72,9 +70,11 @@ export class RLSTableStack extends Stack {
 
         // Add Permissions to access spillbucket and outputbucket to Quicksight
         qsrole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSQuicksightAthenaAccess'));
-        qsrole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AWSLambdaRole'));
+        qsrole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')); // Change to Invoke Lambda
         qsrole.addToPrincipalPolicy(new iam.PolicyStatement({
-            actions: ['s3:ListAllMyBuckets'],
+            actions: [
+                's3:ListAllMyBuckets',
+            ],
             resources: ['*'],
         }));
         qsrole.addToPrincipalPolicy(new iam.PolicyStatement({
@@ -101,6 +101,14 @@ export class RLSTableStack extends Stack {
             outputBucket.bucketArn + '/*',
             ],
         }));
+        qsrole.addToPrincipalPolicy(new iam.PolicyStatement({
+            actions: [
+                'lambda:InvokeFunction'
+            ],
+            resources: [
+                'arn:aws:lambda:ap-southeast-1:203903977784:function:rls_catalog'
+            ]
+        }));
 
         // IAM Role for Athena
         const rlsRole = new iam.Role(this, 'RLSRole', {
@@ -121,6 +129,16 @@ export class RLSTableStack extends Stack {
             resources: [RLS_Table.tableArn],
         }));
 
+        rlsRole.addToPolicy(new iam.PolicyStatement({
+            sid: 'CreateIngestionPolicy',
+            actions: [
+                'quicksight:CreateIngestion'
+            ],
+            resources: [
+                `arn:aws:quicksight:${this.region}:${this.account}:dataset/${this.node.tryGetContext('rlsDatasetId')}/ingestion/*`
+            ],
+        }))
+
         const rowLevelSecurityFunc = new lambda.Function(this, 'UpdateRowLevelSecurityFunction', {
             runtime: lambda.Runtime.NODEJS_18_X,
             handler: 'rowLevelSecurity.rowLevelSecurity',
@@ -129,6 +147,7 @@ export class RLSTableStack extends Stack {
             environment: {
                 REGION: this.region,
                 AWS_ACC_ID: this.account,
+                RLS_DATASET_ID: this.node.tryGetContext('rlsDatasetId')
             },
             timeout: Duration.minutes(1),
         });
@@ -138,6 +157,11 @@ export class RLSTableStack extends Stack {
             value: rowLevelSecurityFunc.functionName,
             description: 'The name function that update the Row Level Security Table',
             exportName: 'RLSTableFunc'
+        });
+        new CfnOutput(this, 'RLSTableFuncARN', {
+            value: rowLevelSecurityFunc.functionArn,
+            description: 'The ARN of the function that update the Row Level Security Table',
+            exportName: 'RLSTableFuncARN'
         });
     }
 }

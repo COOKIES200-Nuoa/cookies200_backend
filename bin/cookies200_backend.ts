@@ -9,7 +9,13 @@ import { AthenaQuickSightStack } from "../src/lib/athenaQS_stack";
 import { QuickSightDataStack } from "../src/lib/quicksightData_stack";
 import { JoinedTableWorkFlowStack } from "../src/lib/joinedTableWorkflow_stack";
 import { RLSTableStack } from "../src/lib/rls_dynamodbTable_stack";
+import { RLSGlueStack } from "../src/lib/rls_glue_stack";
 const app = new cdk.App();
+
+const env = {
+  account: process.env.CDK_DEFAULT_ACCOUNT,
+  region: process.env.CDK_DEFAULT_REGION,
+}
 
 const cognitoStack = new CognitoStack(app, "CognitoStack", {
   env: {
@@ -103,9 +109,19 @@ const rls_dynamodbTable_stack = new RLSTableStack(
   }
 );
 
+const rls_glue_stack = new RLSGlueStack(
+  app,
+  'RLSGlueStack',
+  {
+    env: env,
+  }
+);
+
 // Add depencies between stacks
+rls_glue_stack.addDependency(rls_dynamodbTable_stack);
 athenaQSStack.addDependency(joinedTableWorkflowStack);
 athenaQSStack.addDependency(quicksightDataStack);
 onboardingStack.addDependency(quicksightDataStack);
+quicksightDataStack.addDependency(rls_glue_stack);
 
 app.synth();

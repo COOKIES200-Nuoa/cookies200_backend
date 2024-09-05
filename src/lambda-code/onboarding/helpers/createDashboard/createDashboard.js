@@ -206,7 +206,6 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
         await createTemplate(createTemplateParams);
         await createAnalysis(createAnalysisParams);
         await createDashboard(createDashboardParams);
-
     } catch (error) {
         console.log('Error creating Quicksight Resource: ', error);
     }

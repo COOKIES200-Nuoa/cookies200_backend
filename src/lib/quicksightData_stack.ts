@@ -13,7 +13,7 @@ export class QuickSightDataStack extends Stack {
 
         // Creating lambda role
         const lambdaRole = new iam.Role(this, "NuoaLambdaExecutionRole", {
-            assumedBy: new iam.CompositePrincipal( // Use CompositePrincipal to combine principals
+            assumedBy: new iam.CompositePrincipal( // Use CompositePrincipal to combine principal
               new iam.ServicePrincipal("lambda.amazonaws.com"),
               new iam.ServicePrincipal("quicksight.amazonaws.com")
             ),
@@ -58,6 +58,7 @@ export class QuickSightDataStack extends Stack {
                 DATASOURCE_NAME: this.node.tryGetContext('dataSourceName'),
                 DATASET_ID: this.node.tryGetContext('datasetId'),
                 DATASET_NAME: this.node.tryGetContext('datasetName'),
+                RLS_DATASET_ID: this.node.tryGetContext('rlsDatasetId'),
             },
             timeout: Duration.minutes(1),
         });

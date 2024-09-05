@@ -106,7 +106,7 @@ export class AthenaQuickSightStack extends Stack {
       resources: [`arn:aws:lambda:${this.region}:${this.account}:function:${this.stackName}-UpdateQuickSightFunction*`],
     }));
 
-    // Lambda update QuickSight datasets
+    // Lambda update QuickSight Dataset
     const updateQuickSightFunction = new lambda.Function(this, 'UpdateQuickSightFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
       code: lambda.Code.fromAsset('src/lambda-code/dtbpipeline/updateQuickSightDataset'),

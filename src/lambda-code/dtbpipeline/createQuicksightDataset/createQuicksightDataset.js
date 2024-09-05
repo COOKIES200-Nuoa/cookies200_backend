@@ -11,19 +11,24 @@ const createDataSource = createQuickSightResource('DataSource', CreateDataSource
 const createDataSet = createQuickSightResource('Dataset', CreateDataSetCommand);
 
 exports.createQuicksightDataset = async (event) => {
-    const quicksightClient = new QuickSightClient({});
 
     // Environmental Variables
     const awsAccountId = process.env.AWS_ACC_ID;
     const region = process.env.REGION;
     const adminId = process.env.ADMIN_ID;
+    // Datasource env variables
     const dataSourceId = process.env.DATASOURCE_ID;
     const dataSourceName = process.env.DATASOURCE_NAME;
+    // Dataset env variables
     const datasetId = process.env.DATASET_ID;
     const datasetName = process.env.DATASET_NAME;
     const catalogName = process.env.CATALOG_NAME;
     const databaseName = process.env.DATABASE_NAME;
     const latest_partition_table_name = process.env.LATEST_PARTITION_TABLE_NAME;
+    // RLS Dataset env variables
+    const rls_datasetId = process.env.RLS_DATASET_ID;
+
+    const quicksightClient = new QuickSightClient({ region: region});
 
     // Create Datasource Params
     const createDataSourceParams = {
@@ -46,6 +51,77 @@ exports.createQuicksightDataset = async (event) => {
                     "quicksight:DescribeDataSource", 
                     "quicksight:DeleteDataSource", 
                     "quicksight:UpdateDataSource"
+                ]
+            }
+        ]
+    };
+
+    // Create RLS Dataset Params
+    const createRLSDatasetParams = {
+        AwsAccountId: awsAccountId,
+        DataSetId: rls_datasetId,
+        Name: 'Row Level Security Dataset',
+        PhysicalTableMap: {
+            'rowlevelsecurity-nuoa-physical-table': {
+                RelationalTable: {
+                    DataSourceArn: `arn:aws:quicksight:ap-southeast-1:203903977784:datasource/${dataSourceId}`,
+                    Catalog: 'ddbconnector',
+                    Schema: 'default',
+                    Name: 'rowlevelsecurity_nuoa',
+                    InputColumns: [
+                        {
+                            Name: "UserArn",
+                            Type: "STRING"
+                        },
+                        {
+                            Name: "tenantid",
+                            Type: "STRING" 
+                        },
+                    ]
+                }
+            }
+        },
+        LogicalTableMap: {
+            'rowlevelsecurity-nuoa-logical-table': {
+                Alias: 'rowlevelsecurity_nuoa',
+                DataTransforms: [
+                    {
+                        ProjectOperation: {
+                            ProjectedColumns: [
+                                'UserArn',
+                                'tenantid'
+                            ]
+                        }
+                    }
+                ],
+                Source: {
+                    PhysicalTableId: 'rowlevelsecurity-nuoa-physical-table'
+                }
+            }
+        }, 
+        ImportMode: 'SPICE',
+        Permissions: [
+            {
+                Principal: `arn:aws:quicksight:${region}:${awsAccountId}:user/default/${adminId}`,
+                Actions: [
+                "quicksight:DeleteDataSet",
+                "quicksight:UpdateDataSetPermissions",
+                "quicksight:PutDataSetRefreshProperties",
+                "quicksight:CreateRefreshSchedule",
+                "quicksight:CancelIngestion",
+                "quicksight:UpdateRefreshSchedule",
+                "quicksight:DeleteRefreshSchedule",
+                "quicksight:PassDataSet",
+                "quicksight:ListRefreshSchedules",
+                "quicksight:DescribeDataSetRefreshProperties",
+                "quicksight:DescribeDataSet",
+                "quicksight:CreateIngestion",
+                "quicksight:DescribeRefreshSchedule",
+                "quicksight:ListIngestions",
+                "quicksight:DescribeDataSetPermissions",
+                "quicksight:UpdateDataSet",
+                "quicksight:DeleteDataSetRefreshProperties",
+                "quicksight:DescribeIngestion"
                 ]
             }
         ]
@@ -333,7 +409,7 @@ exports.createQuicksightDataset = async (event) => {
                 }
             }
         },
-        "OutputColumns": [
+        OutputColumns: [
             {
                 Name: "entityid",
                 Type: "STRING"
@@ -509,6 +585,7 @@ exports.createQuicksightDataset = async (event) => {
     try {
         await createDataSource(createDataSourceParams);
         await createDataSet(createDatasetParams);
+        await createDataSet(createRLSDatasetParams);
         await quicksightClient.send(refreshConfigCommand);
     } catch (error) {
         console.error('Error creating Quicksight Data Source/Dataset: ', error);

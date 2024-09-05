@@ -7,7 +7,6 @@ import {
 } from 'aws-cdk-lib';
 import { Construct } from "constructs";
 import { Stack, StackProps, Duration, Fn } from "aws-cdk-lib";
-import { QuickSightDataStack } from './quicksightData_stack';
 
 export class QuickSightOnboardingStack extends Stack {
 
@@ -22,6 +21,9 @@ export class QuickSightOnboardingStack extends Stack {
         super(scope, id, props);
         // Import Dataset ARN
         const datasetArn = Fn.importValue('DatasetArn');
+
+        // Import Update RLS function ARN
+        const updateRLSTableArn = Fn.importValue('RLSTableFuncARN');
 
     // ========= Creating lambda function =========
         const lambdaRole = new iam.Role(this, "NuoaLambdaExecutionRole", {
@@ -59,6 +61,7 @@ export class QuickSightOnboardingStack extends Stack {
             })
         );
 
+        // Policy for creating Cognito Group
         lambdaRole.addToPolicy(
             new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
@@ -113,6 +116,7 @@ export class QuickSightOnboardingStack extends Stack {
             })
         );
     
+        // Policies for creating and getting Identity Pool Role
         lambdaRole.addToPolicy(
             new iam.PolicyStatement({
                 effect: iam.Effect.ALLOW,
@@ -122,6 +126,18 @@ export class QuickSightOnboardingStack extends Stack {
                 ],
                 resources: [
                     `arn:aws:cognito-identity:${this.region}:${this.account}:identitypool/*`,
+                ],
+            })
+        );
+
+        lambdaRole.addToPolicy(
+            new iam.PolicyStatement({
+                effect: iam.Effect.ALLOW,
+                actions: [
+                    "lambda:InvokeFunction",
+                ],
+                resources: [
+                    updateRLSTableArn,
                 ],
             })
         );
@@ -140,6 +156,7 @@ export class QuickSightOnboardingStack extends Stack {
             USER_POOL_CLIENT_ID: userPoolClientId,
             AUTH_ROLE_ARN: nuoaAuthRoleArn,
             DATASET: this.node.tryGetContext('datasetId'),
+            UPDATE_RLS_ARN: updateRLSTableArn,
             },
             timeout: Duration.minutes(1),
         });

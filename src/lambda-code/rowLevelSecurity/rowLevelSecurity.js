@@ -11,11 +11,16 @@ const {
     DynamoDBDocumentClient,
 } = require('@aws-sdk/lib-dynamodb');
 
+const { updateRLS } = require('./updateRLS');
+
+const region = process.env.REGION;
+const dynamodbClient = new DynamoDBClient({ region: region });
+const docClient = DynamoDBDocumentClient.from(dynamodbClient);
+
 exports.rowLevelSecurity = async (event) => {
 
-    const region = process.env.REGION;
-    const dynamodbClient = new DynamoDBClient({ region: region });
-    const docClient = DynamoDBDocumentClient.from(dynamodbClient);
+  tenant = event.tenant;
+  tenantid = event.tenantid;
 
     const updateRLS_Admin = new BatchWriteCommand({
         RequestItems: {
@@ -51,8 +56,8 @@ exports.rowLevelSecurity = async (event) => {
     const updateRLS_Tenant = new PutCommand({
         TableName: 'RowLevelSecurity_Nuoa',
         Item: {
-            UserArn: 'arn:aws:quicksight:ap-southeast-1:203903977784:user/default/test-user',
-            tenantid: 'test-tenant-id'
+            UserArn: `arn:aws:quicksight:ap-southeast-1:203903977784:user/${tenant}/${tenant}TenantRole/${tenant}`,
+            tenantid: tenantid
         },
     });
 
@@ -74,6 +79,7 @@ exports.rowLevelSecurity = async (event) => {
             const updateRLS_Tenant_Res = await docClient.send(updateRLS_Tenant);
             console.log("Update RLS table with Tenant permissions");
         }
+        await updateRLS();
     } catch (error) {
         console.error(error);
     }
