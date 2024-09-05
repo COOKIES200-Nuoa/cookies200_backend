@@ -1,6 +1,4 @@
 const {
-    BatchWriteItemCommand,
-    DescribeTableCommand,
     DynamoDBClient,
 } = require('@aws-sdk/client-dynamodb')
 
@@ -19,8 +17,13 @@ const docClient = DynamoDBDocumentClient.from(dynamodbClient);
 
 exports.rowLevelSecurity = async (event) => {
 
-  tenant = event.tenant;
-  tenantid = event.tenantid;
+    console.log('LambdaInvoked');
+    
+    const tenant = event.tenant;
+    const tenantid = event.tenantid;
+
+    console.log(tenant);
+    console.log(tenantid);
 
     const updateRLS_Admin = new BatchWriteCommand({
         RequestItems: {

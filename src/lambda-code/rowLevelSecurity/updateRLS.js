@@ -3,17 +3,16 @@ const {
     CreateIngestionCommand 
 } = require("@aws-sdk/client-quicksight");
 
-// Region and AWS Account ID
-const region = process.env.REGION;
-const account = process.env.AWS_ACC_ID;
-
-// RLS Dataset ID
-const datasetId = process.env.RLS_DATASET_ID;
-
-// AWS-SDK Client
-const quicksightClient = new QuickSightClient({ region: region });
-
 async function updateRLS() {
+
+    // Region and AWS Account ID
+    const region = process.env.REGION;
+    const account = process.env.AWS_ACC_ID;
+    // RLS Dataset ID
+    const datasetId = process.env.RLS_DATASET_ID;
+
+    // AWS-SDK Client
+    const quicksightClient = new QuickSightClient({ region: region });  
     
     const timestamp = Date.now();
 
