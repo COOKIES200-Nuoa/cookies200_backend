@@ -9,11 +9,6 @@ const { getEnv } = require('../../getEnv');
 
 const { createQuickSightResource } = require('./createResource');
 
-// const region = process.env.REGION;
-// const awsAccountId = process.env.AWS_ACC_ID;
-// const datasetId = process.env.DATASET;
-// const adminId = process.env.QUICKSIGHT_ADMIN_ID;
-
 const createNamespace = createQuickSightResource('Namespace', CreateNamespaceCommand);
 const createTemplate = createQuickSightResource('Template', CreateTemplateCommand);
 const createAnalysis = createQuickSightResource('Analysis', CreateAnalysisCommand);
@@ -46,6 +41,7 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
         DataSetConfigurations: [
             {
                 Placeholder: "Placeholder_dataset", 
+                DataSetArn: "",
                 DataSetSchema: {
                     ColumnSchemaList: [] 
                 }
@@ -109,7 +105,27 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
                     "quicksight:DescribeAnalysis", 
                     "quicksight:UpdateAnalysis"
                 ],
-            }
+            },
+            {
+                Principal: `arn:aws:quicksight:${getEnv().region}:${getEnv().awsAccountId}:user/default/Nham-Cookies200`,
+                Actions: [
+                    "quicksight:RestoreAnalysis", 
+                    "quicksight:UpdateAnalysisPermissions", 
+                    "quicksight:DeleteAnalysis", 
+                    "quicksight:QueryAnalysis", 
+                    "quicksight:DescribeAnalysisPermissions", 
+                    "quicksight:DescribeAnalysis", 
+                    "quicksight:UpdateAnalysis"
+                ],
+            },
+            {
+                // Grant permissions to tenant
+                Principal: `arn:aws:quicksight:${getEnv().region}:${getEnv().awsAccountId}:namespace/${tenant}`,
+                Actions: [
+                    "quicksight:DescribeAnalysis", 
+                    "quicksight:QueryAnalysis"
+                ]
+            },
         ]
     };
 
@@ -148,11 +164,26 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
                 ]
             },
             {
-                // Grant permissions to tenant's namespace
-                Principal: `arn:aws:quicksight:${getEnv().region}:${getEnv().awsAccountId}:namespace/${tenant}`,
+                // Grant permissions to admin
+                Principal: `arn:aws:quicksight:${getEnv().region}:${getEnv().awsAccountId}:user/default/Nham-Cookies200`,
                 Actions: [
-                    "quicksight:QueryAnalysis", 
-                    "quicksight:DescribeAnalysis", 
+                    "quicksight:DescribeDashboard", 
+                    "quicksight:ListDashboardVersions", 
+                    "quicksight:UpdateDashboardPermissions", 
+                    "quicksight:QueryDashboard", 
+                    "quicksight:UpdateDashboard", 
+                    "quicksight:DeleteDashboard", 
+                    "quicksight:UpdateDashboardPublishedVersion", 
+                    "quicksight:DescribeDashboardPermissions"
+                ]
+            },
+            {
+                // Grant permissions to tenant
+                Principal: `arn:aws:quicksight:${getEnv().region}:${getEnv().awsAccountId}:user/${tenant}/${tenant}TenantRole/${tenant}`,
+                Actions: [
+                    "quicksight:DescribeDashboard", 
+                    "quicksight:QueryDashboard", 
+                    "quicksight:ListDashboardVersions"
                 ]
             },
         ]
@@ -167,15 +198,15 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
         UserRole: 'READER',
         SessionName: tenant,
         IamArn: tenantRoleArn,
-    }
+        CustomPermissionsName: 'Tenant-Authors' ? 'Tenant-Authors' : '',
+    };
 
     try {
         await createNamespace(createNameSpaceParams);
+        await registerUser(registerUserParams);
         await createTemplate(createTemplateParams);
         await createAnalysis(createAnalysisParams);
         await createDashboard(createDashboardParams);
-        await registerUser(registerUserParams);
-
     } catch (error) {
         console.log('Error creating Quicksight Resource: ', error);
     }

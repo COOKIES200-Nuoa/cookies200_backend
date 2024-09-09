@@ -6,7 +6,7 @@ import {
     aws_cloudtrail as cloudtrail,
 } from 'aws-cdk-lib';
 import { Construct } from "constructs";
-import { Stack, StackProps, Duration } from "aws-cdk-lib";
+import { Stack, StackProps, Duration, Fn } from "aws-cdk-lib";
 
 export class QuickSightOnboardingStack extends Stack {
 
@@ -19,6 +19,11 @@ export class QuickSightOnboardingStack extends Stack {
         props?: StackProps,
     ) {
         super(scope, id, props);
+        // Import Dataset ARN
+        const datasetArn = Fn.importValue('DatasetArn');
+
+        // Import Update RLS function ARN
+        const updateRLSTableArn = Fn.importValue('RLSTableFuncARN');
 
     // ========= Creating lambda function =========
         const lambdaRole = new iam.Role(this, "NuoaLambdaExecutionRole", {
@@ -56,6 +61,7 @@ export class QuickSightOnboardingStack extends Stack {
             })
         );
 
+        // Policy for creating Cognito Group
         lambdaRole.addToPolicy(
             new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
@@ -110,6 +116,7 @@ export class QuickSightOnboardingStack extends Stack {
             })
         );
     
+        // Policies for creating and getting Identity Pool Role
         lambdaRole.addToPolicy(
             new iam.PolicyStatement({
                 effect: iam.Effect.ALLOW,
@@ -123,6 +130,18 @@ export class QuickSightOnboardingStack extends Stack {
             })
         );
 
+        lambdaRole.addToPolicy(
+            new iam.PolicyStatement({
+                effect: iam.Effect.ALLOW,
+                actions: [
+                    "lambda:InvokeFunction",
+                ],
+                resources: [
+                    updateRLSTableArn,
+                ],
+            })
+        );
+
         const qsOnboardingFunction = new lambda.Function(this, 'QuickSightOnboardingLambda', {
             runtime: lambda.Runtime.NODEJS_18_X,
             handler: 'quicksightOnboarding.quicksightOnboarding',
@@ -131,12 +150,13 @@ export class QuickSightOnboardingStack extends Stack {
             environment: {
             REGION: this.region,
             AWS_ACC_ID: this.account,
-            QUICKSIGHT_ADMIN_ID: 'Cookies200',
+            QUICKSIGHT_ADMIN_ID: this.node.tryGetContext('adminId'),
             USER_POOL_ID: userPool.userPoolId,
             IDPOOL_ID: identityPoolId,
             USER_POOL_CLIENT_ID: userPoolClientId,
             AUTH_ROLE_ARN: nuoaAuthRoleArn,
-            DATASET: 'bc93b225-e6f7-4664-8331-99e66f5b7841', // Place holder dataset
+            DATASET: this.node.tryGetContext('datasetId'),
+            UPDATE_RLS_ARN: updateRLSTableArn,
             },
             timeout: Duration.minutes(1),
         });
