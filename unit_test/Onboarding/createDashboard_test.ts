@@ -13,11 +13,11 @@ import {
 } from '@aws-sdk/client-quicksight';
 import { mockClient } from 'aws-sdk-client-mock';
 
-const { createQSDashboard } = require('../src/lambda-code/onboarding/helpers/createDashboard/createDashboard');
-const { createQuickSightResource } = require('../src/lambda-code/onboarding/helpers/createDashboard/createResource');
-const { getEnv } = require ('../src/lambda-code/onboarding/getEnv');
+const { createQSDashboard } = require('../../src/lambda-code/onboarding/helpers/createDashboard/createDashboard');
+const { createQuickSightResource } = require('../../src/lambda-code/onboarding/helpers/createDashboard/createResource');
+const { getEnv } = require ('../../src/lambda-code/onboarding/getEnv');
 
-jest.mock('../src/lambda-code/onboarding/getEnv', () => ({
+jest.mock('../../src/lambda-code/onboarding/getEnv', () => ({
     getEnv: jest.fn(() => ({
         region: 'ap-southeast-1', // Example values
         awsAccountId: '123456789012',
@@ -26,7 +26,7 @@ jest.mock('../src/lambda-code/onboarding/getEnv', () => ({
     })),
 }));
 
-jest.mock('../src/lambda-code/onboarding/helpers/createDashboard/createResource', () => ({
+jest.mock('../../src/lambda-code/onboarding/helpers/createDashboard/createResource', () => ({
     createQuickSightResource: jest.fn().mockImplementation((resourceType) => {
         // Simulate successful resource creation based on the type
         return (params: 

@@ -9,7 +9,7 @@ import {
 } from '@aws-sdk/client-lambda';
 import { mockClient } from 'aws-sdk-client-mock';
 
-const { createAthenaTable } = require('../src/lambda-code/dtbpipeline/createAthenaTable/createAthenaTable');
+const { createAthenaTable } = require('../../src/lambda-code/dtbpipeline/createAthenaTable/createAthenaTable');
 
 const athenaMock = mockClient(AthenaClient);
 const lambdaMock = mockClient(LambdaClient);

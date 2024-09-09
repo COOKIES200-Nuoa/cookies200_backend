@@ -4,7 +4,7 @@ import {
 } from '@aws-sdk/client-quicksight';
 import { mockClient } from 'aws-sdk-client-mock';
 
-const { updateQS } = require('../src/lambda-code/dtbpipeline/updateQuickSightDataset/updateQS');
+const { updateQS } = require('../../src/lambda-code/dtbpipeline/updateQuickSightDataset/updateQS');
 
 const quicksightMock = mockClient(QuickSightClient);
 

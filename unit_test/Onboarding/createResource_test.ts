@@ -12,7 +12,7 @@ import {
 } from '@aws-sdk/client-quicksight';
 import { mockClient } from 'aws-sdk-client-mock';
 
-const { createQuickSightResource } = require('../src/lambda-code/onboarding/helpers/createDashboard/createResource');
+const { createQuickSightResource } = require('../../src/lambda-code/onboarding/helpers/createDashboard/createResource');
 
 const mockQuickSightClient = mockClient(QuickSightClient);
 

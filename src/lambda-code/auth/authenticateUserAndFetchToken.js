@@ -3,7 +3,7 @@ const {
   CognitoIdentityProviderClient,
   InitiateAuthCommand,
   RespondToAuthChallengeCommand
-} = require('@aws-sdkzws  client-cognito-identity-provider');
+} = require('@aws-sdk/client-cognito-identity-provider');
 
 const USER_POOL_ID = process.env.USER_POOL_ID;
 const CLIENT_ID = process.env.USER_POOL_CLIENT_ID;

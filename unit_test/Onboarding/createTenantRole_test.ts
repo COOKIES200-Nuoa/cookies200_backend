@@ -6,8 +6,8 @@ import {
 } from '@aws-sdk/client-iam';
 import { mockClient } from 'aws-sdk-client-mock';
 
-const { createTenantRole, waitForRoleCreation } = require('../src/lambda-code/onboarding/helpers/createTenant/createTenantRole');
-const { getEnv } = require('../src/lambda-code/onboarding/getEnv');
+const { createTenantRole, waitForRoleCreation } = require('../../src/lambda-code/onboarding/helpers/createTenant/createTenantRole');
+const { getEnv } = require('../../src/lambda-code/onboarding/getEnv');
 
 import { EntityAlreadyExistsException, NoSuchEntityException } from '@aws-sdk/client-iam';
 import 'aws-sdk-client-mock-jest';
@@ -15,7 +15,7 @@ import 'aws-sdk-client-mock-jest';
 // Mock the IAMClient and its methods
 const mockIamClient = mockClient(IAMClient);
 
-jest.mock('../src/lambda-code/onboarding/getEnv', () => ({
+jest.mock('../../src/lambda-code/onboarding/getEnv', () => ({
     getEnv: jest.fn(() => ({
         region: 'ap-southeast-1',
         awsAccountId: '123456789012',

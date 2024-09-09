@@ -9,12 +9,12 @@ import {
 } from '@aws-sdk/client-cognito-identity';
 import { mockClient } from 'aws-sdk-client-mock';
 
-const { createRoleMapping } = require ('../src/lambda-code/onboarding/helpers/createTenant/createRoleMapping');
-const { getEnv } = require ('../src/lambda-code/onboarding/getEnv');
+const { createRoleMapping } = require ('../../src/lambda-code/onboarding/helpers/createTenant/createRoleMapping');
+const { getEnv } = require ('../../src/lambda-code/onboarding/getEnv');
 
-jest.mock('../src/lambda-code/onboarding/getEnv', () => ({
+jest.mock('../../src/lambda-code/onboarding/getEnv', () => ({
     getEnv: jest.fn(() => ({
-        region: 'ap-southeast-1', // Example values
+        region: 'ap-southeast-1',
         awsAccountId: '123456789012',
         identityPoolId: 'YOUR_IDENTITY_POOL_ID',
         userPoolId: 'YOUR_USER_POOL_ID',

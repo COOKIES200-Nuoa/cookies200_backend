@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
-import { LogoutStack } from '../../src/lib/logout_stack'; // Adjust the path according to your project structure
+import { LogoutStack } from '../../src/lib/logout_stack';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 
 describe('LogoutStack', () => {
