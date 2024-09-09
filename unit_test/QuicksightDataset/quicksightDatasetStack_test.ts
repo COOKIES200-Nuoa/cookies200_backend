@@ -79,7 +79,10 @@ import { QuickSightDataStack } from '../../src/lib/quicksightData_stack'; // Adj
                 'quicksight:DescribeDataSource',
                 'quicksight:DescribeDataSet',
                 'quicksight:PassDataSource',
-                'quicksight:PutDataSetRefreshProperties'
+                'quicksight:PassDataSet',
+                'quicksight:PutDataSetRefreshProperties',
+                'athena:GetTableMetadata',
+                'glue:GetTable'
             ],
             Effect: 'Allow',
             Resource: '*'

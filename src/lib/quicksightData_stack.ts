@@ -36,9 +36,12 @@ export class QuickSightDataStack extends Stack {
                 'quicksight:DescribeDataSource',
                 'quicksight:DescribeDataSet',
                 'quicksight:PassDataSource',
-                'quicksight:PutDataSetRefreshProperties'
+                'quicksight:PassDataSet',
+                'quicksight:PutDataSetRefreshProperties',
+                'athena:GetTableMetadata',
+                'glue:GetTable'
             ],
-            resources: ['*'],
+            resources: ['*'], // Specify relevant tables here
             })
         );
 

@@ -4,6 +4,10 @@ const {
     PutDataSetRefreshPropertiesCommand,
     QuickSightClient,
 } = require('@aws-sdk/client-quicksight');
+const {
+    GetTableMetadataCommand,
+    AthenaClient,
+} = require('@aws-sdk/client-athena');
 
 const { createQuickSightResource } = require('./helper/createResource')
 
@@ -29,6 +33,40 @@ exports.createQuicksightDataset = async (event) => {
     const rls_datasetId = process.env.RLS_DATASET_ID;
 
     const quicksightClient = new QuickSightClient({ region: region});
+    const athenaClient = new AthenaClient({ region: region });
+
+    // Get schema of source Athena Table
+    const command = new GetTableMetadataCommand({
+        CatalogName: catalogName,
+        DatabaseName: databaseName,
+        TableName: latest_partition_table_name,
+    });
+    const res = await athenaClient.send(command);
+    const datasetColumns = res.TableMetadata.Columns;
+
+    // Create Dataset Columns based on source Athena Table's schema
+    for (const item of datasetColumns) {
+        if (item.Type.startsWith("decimal")) {
+            item.Type = "DECIMAL"; 
+            console.log(item);
+        } else if (item.Type.startsWith("bigint")) {
+            item.Type = "INTEGER";
+        } else {  
+            item.Type = item.Type.toUpperCase();  // Capitalize only if string type
+        }
+    };
+
+    // Add aggregation columns not currently present in source Table schema
+    datasetColumns.push(
+        {
+            Name: "total_emissions_marketbased",
+            Type: "DECIMAL",
+        },
+        {
+            Name: "total_emissions_locationbased",
+            Type: "DECIMAL",
+        }
+    );
 
     // Create Datasource Params
     const createDataSourceParams = {
@@ -45,12 +83,15 @@ exports.createQuicksightDataset = async (event) => {
             {
                 Principal: `arn:aws:quicksight:${region}:${awsAccountId}:user/default/${adminId}`,
                 Actions: [
-                    "quicksight:UpdateDataSourcePermissions", 
-                    "quicksight:DescribeDataSourcePermissions", 
-                    "quicksight:PassDataSource", 
-                    "quicksight:DescribeDataSource", 
-                    "quicksight:DeleteDataSource", 
-                    "quicksight:UpdateDataSource"
+                    'quicksight:CreateDataSource',
+                    'quicksight:CreateDataset',
+                    'quicksight:DescribeDataSource',
+                    'quicksight:DescribeDataSet',
+                    'quicksight:PassDataSource',
+                    'quicksight:PassDataSet',
+                    'quicksight:PutDataSetRefreshProperties',
+                    'athena:GetTableMetadata',
+                    'glue:GetTable'
                 ]
             }
         ]
@@ -161,36 +202,9 @@ exports.createQuicksightDataset = async (event) => {
                         INNER JOIN C ON T.entityid = C.id AND T.tenantid = C.tenantid
                     )
                     SELECT 
-                        T.entityid AS entityid,
-                        T.parententityid,
-                        T.emissioninkgco2,
-                        T.emissioninkgco2_forlocationbased,
-                        T.emissioninkgco2_formarketbased,
+                        T.*,
                         S.Cumulative_MarketBased AS total_emissions_marketbased,
-                        S.Cumulative_LocationBased AS total_emissions_locationbased,
-                        T.parentcontributionpercentage,
-                        T.scope,
-                        T.date,
-                        T.country,
-                        T.province,
-                        T.fuelsource,
-                        T.fueltype,
-                        T.fuelunit,
-                        T.tenantid,
-                        T.baseline,
-                        T.activityamount,
-                        T.manager,
-                        T.formid,
-                        T.ownershippercentage,
-                        T.ownershipconsolidatepercentage,
-                        T.consolidateapproach,
-                        T.category,
-                        T.name,
-                        T.code,
-                        T.operatingtype,
-                        T.industry,
-                        T.period,
-                        T.activityid
+                        S.Cumulative_LocationBased AS total_emissions_locationbased
                     FROM ${catalogName}.${databaseName}.${latest_partition_table_name} AS T
                     INNER JOIN (
                                 SELECT 
@@ -204,135 +218,7 @@ exports.createQuicksightDataset = async (event) => {
                     `,
                     DataSourceArn: `arn:aws:quicksight:ap-southeast-1:203903977784:datasource/${dataSourceId}`,
                     Name: datasetName,
-                    Columns: [
-                        
-                        {
-                            Name: "entityid",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "parententityid",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "emissioninkgco2",
-                            Type: "DECIMAL",
-                            SubType: "FIXED"
-                        },
-                        {
-                            Name: "emissioninkgco2_forlocationbased",
-                            Type: "DECIMAL",
-                            SubType: "FIXED"
-                        },
-                        {
-                            Name: "emissioninkgco2_formarketbased",
-                            Type: "DECIMAL",
-                            SubType: "FIXED"
-                        },
-                        {
-                            Name: "total_emissions_marketbased",
-                            Type: "DECIMAL",
-                            SubType: "FIXED"
-                        },
-                        {
-                            Name: "total_emissions_locationbased",
-                            Type: "DECIMAL",
-                            SubType: "FIXED"
-                        },
-                        {
-                            Name: "parentcontributionpercentage",
-                            Type: "DECIMAL",
-                            SubType: "FIXED"
-                        },
-                        {
-                            Name: "scope",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "date",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "country",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "province",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "fuelsource",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "fueltype",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "fuelunit",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "tenantid",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "baseline",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "activityamount",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "manager",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "formid",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "ownershippercentage",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "ownershipconsolidatepercentage",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "consolidateapproach",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "category",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "name",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "code",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "operatingtype",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "industry",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "period",
-                            Type: "STRING"
-                        },
-                        {
-                            Name: "activityid",
-                            Type: "STRING"
-                        }
-                    ]
+                    Columns: datasetColumns 
                 }
             }
         },
@@ -367,177 +253,19 @@ exports.createQuicksightDataset = async (event) => {
                             ]
                         }
                     },
-                    {
-                        ProjectOperation: {
-                            ProjectedColumns: [
-                                "entityid",
-                                "parententityid",
-                                "emissioninkgco2",
-                                "emissioninkgco2_forlocationbased",
-                                "emissioninkgco2_formarketbased",
-                                "total_emissions_marketbased",
-                                "total_emissions_locationbased",
-                                "parentcontributionpercentage",
-                                "scope",
-                                "date",
-                                "country",
-                                "province",
-                                "fuelsource",
-                                "fueltype",
-                                "fuelunit",
-                                "tenantid",
-                                "baseline",
-                                "activityamount",
-                                "manager",
-                                "formid",
-                                "ownershippercentage",
-                                "ownershipconsolidatepercentage",
-                                "consolidateapproach",
-                                "category",
-                                "name",
-                                "code",
-                                "operatingtype",
-                                "industry",
-                                "period",
-                                "activityid"
-                            ]
-                        }
-                    }
                 ],
                 Source: {
                     PhysicalTableId: 'nuoa-data-physical-table'
                 }
             }
         },
-        OutputColumns: [
-            {
-                Name: "entityid",
-                Type: "STRING"
-            },
-            {
-                Name: "parententityid",
-                Type: "STRING"
-            },
-            {
-                Name: "emissioninkgco2",
-                Type: "DECIMAL",
-                SubType: "FIXED"
-            },
-            {
-                Name: "emissioninkgco2_forlocationbased",
-                Type: "DECIMAL",
-                SubType: "FIXED"
-            },
-            {
-                Name: "emissioninkgco2_formarketbased",
-                Type: "DECIMAL",
-                SubType: "FIXED"
-            },
-            {
-                Name: "total_emissions_marketbased",
-                Type: "DECIMAL",
-                SubType: "FIXED"
-            },
-            {
-                Name: "total_emissions_locationbased",
-                Type: "DECIMAL",
-                SubType: "FIXED"
-            },
-            {
-                Name: "parentcontributionpercentage",
-                Type: "DECIMAL",
-                SubType: "FIXED"
-            },
-            {
-                Name: "scope",
-                Type: "STRING"
-            },
-            {
-                Name: "date",
-                Type: "DATETIME"
-            },
-            {
-                Name: "country",
-                Type: "STRING"
-            },
-            {
-                Name: "province",
-                Type: "STRING"
-            },
-            {
-                Name: "fuelsource",
-                Type: "STRING"
-            },
-            {
-                Name: "fueltype",
-                Type: "STRING"
-            },
-            {
-                Name: "fuelunit",
-                Type: "STRING"
-            },
-            {
-                Name: "tenantid",
-                Type: "STRING"
-            },
-            {
-                Name: "baseline",
-                Type: "STRING"
-            },
-            {
-                Name: "activityamount",
-                Type: "STRING"
-            },
-            {
-                Name: "manager",
-                Type: "STRING"
-            },
-            {
-                Name: "formid",
-                Type: "STRING"
-            },
-            {
-                Name: "ownershippercentage",
-                Type: "STRING"
-            },
-            {
-                Name: "ownershipconsolidatepercentage",
-                Type: "STRING"
-            },
-            {
-                Name: "consolidateapproach",
-                Type: "STRING"
-            },
-            {
-                Name: "category",
-                Type: "STRING"
-            },
-            {
-                Name: "name",
-                Type: "STRING"
-            },
-            {
-                Name: "code",
-                Type: "STRING"
-            },
-            {
-                Name: "operatingtype",
-                Type: "STRING"
-            },
-            {
-                Name: "industry",
-                Type: "STRING"
-            },
-            {
-                Name: "period",
-                Type: "STRING"
-            },
-            {
-                Name: "activityid",
-                Type: "STRING"
-            }
-        ],
         ImportMode: 'SPICE',
+        RowLevelPermissionDataSet: {
+            Arn: `arn:aws:quicksight:${region}:${awsAccountId}:dataset/${rls_datasetId}`,
+            PermissionPolicy: "GRANT_ACCESS",
+            FormatVersion: "VERSION_2",
+            Status: "ENABLED",
+        },
         Permissions: [
             {
                 Principal: `arn:aws:quicksight:${region}:${awsAccountId}:user/default/${adminId}`,
@@ -563,7 +291,6 @@ exports.createQuicksightDataset = async (event) => {
                 ]
             }
         ]
-
     };
 
     const refreshConfigCommand = new PutDataSetRefreshPropertiesCommand({

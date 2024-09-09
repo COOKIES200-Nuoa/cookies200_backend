@@ -98,7 +98,7 @@ describe('createAthenaTable Lambda Function', () => {
         athenaMock.on(GetQueryExecutionCommand).resolvesOnce({
             QueryExecution: { Status: { State: 'RUNNING' } }
         }).resolves({
-            QueryExecution: { Status: { State: 'SUCCEEDED' } }
+            QueryExecution: { Status: { State: 'FAILED' } }
         });
 
         // Mock Lambda invoke to fail

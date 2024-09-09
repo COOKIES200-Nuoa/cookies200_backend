@@ -198,7 +198,8 @@ async function createQSDashboard(tenant, email, tenantRoleArn) {
         UserRole: 'READER',
         SessionName: tenant,
         IamArn: tenantRoleArn,
-    }
+        CustomPermissionsName: 'Tenant-Authors' ? 'Tenant-Authors' : '',
+    };
 
     try {
         await createNamespace(createNameSpaceParams);

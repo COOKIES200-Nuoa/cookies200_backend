@@ -73,13 +73,15 @@ describe('AthenaQSStack', () => {
                     },
                     {
                         Action: [
-                            "athena:StartQueryExecution",
-                            "athena:GetQueryExecution",
-                            "athena:CreateTable",
-                            "glue:GetDatabase",
-                            "glue:CreateTable",
-                            "glue:GetTable",
-                            "quicksight:CreateIngestion"
+                            'athena:StartQueryExecution',
+                            'athena:GetQueryExecution',
+                            'athena:CreateTable',
+                            'glue:GetDatabase',
+                            'glue:CreateTable',
+                            'glue:GetTable',
+                            'glue:UpdateTable',
+                            'quicksight:DescribeDataSet',
+                            'quicksight:CreateIngestion'
                         ],
                         Resource: "*",
                         Effect: "Allow",
@@ -87,13 +89,13 @@ describe('AthenaQSStack', () => {
                     },
                     {
                         Action: [
-                            "athena:GetQueryResults",
-                            "s3:ListMultipartUploadParts",
-                            "athena:GetWorkGroup",
-                            "s3:PutObject",
-                            "s3:GetObject",
-                            "athena:StopQueryExecution",
-                            "s3:GetBucketLocation"
+                            'athena:GetQueryResults',
+                            's3:ListMultipartUploadParts',
+                            'athena:GetWorkGroup',
+                            's3:PutObject',
+                            's3:GetObject',
+                            'athena:StopQueryExecution',
+                            's3:GetBucketLocation',
                         ],
                         Resource: {'Fn::Join':[
                             "",

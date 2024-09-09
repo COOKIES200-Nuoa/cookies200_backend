@@ -53,9 +53,20 @@ def flatten_data_field(dynamic_frame, root_field_name="data"):
     df = df.drop(root_field_name)
     
     return df
+    
+def extract_double_from_struct(df, column_name):
+    return df.withColumn(column_name, F.col(f"{column_name}.double"))
 
 # Apply the flattening function to the activity table
 activity_table_flattened = flatten_data_field(activity_table)
+
+# Handle the struct fields for emissionInKgCO2 and similar columns
+activity_table_flattened = extract_double_from_struct(activity_table_flattened, 'emissionInKgCO2')
+activity_table_flattened = extract_double_from_struct(activity_table_flattened, 'emissionInKgCO2_ForLocationBased')
+activity_table_flattened = extract_double_from_struct(activity_table_flattened, 'emissionInKgCO2_ForMarketBased')
+
+#DEBUG
+activity_table_flattened.printSchema()
 
 # Convert back to DynamicFrame for further transformations in Glue
 activity_table_flattened_dynamic = DynamicFrame.fromDF(activity_table_flattened, glueContext, "activity_table_flattened")
@@ -101,7 +112,7 @@ entity_table_flattened = entity_table.apply_mapping([
     ('data.ownershipPercentage', 'string', 'ownershippercentage', 'string'),
     ('data.province', 'string', 'province', 'string'),
     ('name', 'string', 'name', 'string'),
-    ('parentcontributionpercentage', 'double', 'parentcontributionpercentage', 'double'),
+    ('parentcontributionpercentage', 'double', 'parentcontributionpercentage', 'decimal'),
     ('parententityid', 'string', 'parententityid', 'string')
 ], transformation_ctx="entity_table_flattened")
 
