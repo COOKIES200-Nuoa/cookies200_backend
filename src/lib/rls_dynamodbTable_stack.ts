@@ -67,7 +67,6 @@ export class RLSTableStack extends Stack {
             'QuickSightRoleImport', 
             `arn:aws:iam::${this.account}:role/service-role/aws-quicksight-service-role-v0`
         );
-
         // Add Permissions to access spillbucket and outputbucket to Quicksight
         qsrole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSQuicksightAthenaAccess'));
         qsrole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')); // Change to Invoke Lambda

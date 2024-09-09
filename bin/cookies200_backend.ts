@@ -10,6 +10,9 @@ import { QuickSightDataStack } from "../src/lib/quicksightData_stack";
 import { JoinedTableWorkFlowStack } from "../src/lib/joinedTableWorkflow_stack";
 import { RLSTableStack } from "../src/lib/rls_dynamodbTable_stack";
 import { RLSGlueStack } from "../src/lib/rls_glue_stack";
+import { GlueStack } from "../src/lib/glue_stack";
+import { Glue } from "@aws-sdk/client-glue";
+
 const app = new cdk.App();
 
 const env = {
@@ -62,6 +65,14 @@ const generateQSUrlStack = new GenerateQSUrlStack(
       account: process.env.CDK_DEFAULT_ACCOUNT,
       region: process.env.CDK_DEFAULT_REGION,
     },
+  }
+);
+
+const glueStack = new GlueStack(
+  app,
+  'GlueStack',
+  {
+    env: env,
   }
 );
 
@@ -119,6 +130,7 @@ const rls_glue_stack = new RLSGlueStack(
 
 // Add depencies between stacks
 rls_glue_stack.addDependency(rls_dynamodbTable_stack);
+joinedTableWorkflowStack.addDependency(glueStack);
 athenaQSStack.addDependency(joinedTableWorkflowStack);
 athenaQSStack.addDependency(quicksightDataStack);
 onboardingStack.addDependency(quicksightDataStack);

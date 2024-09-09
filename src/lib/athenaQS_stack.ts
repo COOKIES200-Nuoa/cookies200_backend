@@ -19,6 +19,7 @@ export class AthenaQuickSightStack extends Stack {
     // Import name of final crawler of Glue Workflow
     const parquetTableCrawlerName = Fn.importValue('ParquetTableCrawlerName');
     const createQSDataFuncArn = Fn.importValue('QuicksightDatasetFunctionArn');
+    const glueOutputBucketName = Fn.importValue('OutputBucket');
 
     // Rule that trigger Athena Query lambda
     const athenaTriggerRule = new events.Rule(this, 'Athena_lambda_trigger_rule', {
@@ -62,7 +63,7 @@ export class AthenaQuickSightStack extends Stack {
         's3:GetObject',
         's3:ListBucket',
       ],
-      resources: ['arn:aws:s3:::processed-nuoa-joinedtable-dev', 'arn:aws:s3:::processed-nuoa-joinedtable-dev*'],
+      resources: [`arn:aws:s3:::${glueOutputBucketName}`, `arn:aws:s3:::${glueOutputBucketName}*`],
     }));
 
     // Athena query execution and table creation permissions

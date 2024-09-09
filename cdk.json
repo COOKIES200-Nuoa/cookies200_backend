@@ -15,7 +15,7 @@
     "rlsTableName": "RowLevelSecurity_Nuoa",
     "rlsDatasetId": "rowlevelsecurity_nuoa",
 
-    "dataSourceBucket": "nuoadatabasetest",
+    "dataSourceBucket": "nuoa-processed-data",
 
     "dataSourceId": "NuoaEmissionDataSource",
     "dataSourceName": "Nuoa Emission Data Source",
