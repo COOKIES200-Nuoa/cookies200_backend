@@ -7,22 +7,22 @@ import  {
 import { mockClient } from 'aws-sdk-client-mock';
 import 'aws-sdk-client-mock-jest';
 
-const { updateRLS } = require('../../../src/lambda-code/rowLevelSecurity/updateRLS'); // Assuming you have this module
+const { updateRLS } = require('../src/lambda-code/rowLevelSecurity/updateRLS'); // Assuming you have this module
 
 const dynamodbDocMock =  mockClient (DynamoDBDocumentClient);
 
 // Mock the updateRLS function (if needed)
-jest.mock('../../../src/lambda-code/rowLevelSecurity/updateRLS', () => ({
+jest.mock('../src/lambda-code/rowLevelSecurity/updateRLS', () => ({
     updateRLS: jest.fn(),
 }));
 
 // Import the Lambda function after setting up the mocks
-const { rowLevelSecurity } = require('../../../src/lambda-code/rowLevelSecurity/rowLevelSecurity'); // Replace with your actual file name
+const { rowLevelSecurity } = require('../src/lambda-code/rowLevelSecurity/rowLevelSecurity'); // Replace with your actual file name
 
 describe('rowLevelSecurity Lambda function', () => {
     beforeEach(() => {
-        dynamodbDocMock.reset(); // Reset modules to ensure a clean state for each test
-        process.env.REGION = 'ap-southeast-1'; // Set the region environment variable
+        dynamodbDocMock.reset(); 
+        process.env.REGION = 'ap-southeast-1'; 
     });
 
     it('should update RLS table with Admin permissions if admin user does not exist', async () => {
@@ -34,7 +34,7 @@ describe('rowLevelSecurity Lambda function', () => {
         await rowLevelSecurity(event);
 
         // Assertions
-        expect(dynamodbDocMock).toHaveReceivedCommandWith(GetCommand, { // Check GetCommand with specific input
+        expect(dynamodbDocMock).toHaveReceivedCommandWith(GetCommand, { 
             TableName: 'RowLevelSecurity_Nuoa',
             Key: {
                 UserArn: 'arn:aws:quicksight:ap-southeast-1:203903977784:user/default/admin_ncbinh'

@@ -72,7 +72,7 @@ template.hasResourceProperties('AWS::Lambda::Function', {
     }
 });
 
-// Assert IAM Role and Policies (this is a basic check, you might want to add more specific assertions for the policy statements)
+// Assert IAM Role and Policies 
 template.hasResourceProperties('AWS::IAM::Role', {
     AssumeRolePolicyDocument: {
     Statement: [{

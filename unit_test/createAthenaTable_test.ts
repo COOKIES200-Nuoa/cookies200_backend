@@ -7,12 +7,17 @@ import {
     LambdaClient,
     InvokeCommand,
 } from '@aws-sdk/client-lambda';
+import {
+    QuickSightClient,
+    DescribeDataSetCommand
+} from '@aws-sdk/client-quicksight';
 import { mockClient } from 'aws-sdk-client-mock';
 
 const { createAthenaTable } = require('../src/lambda-code/dtbpipeline/createAthenaTable/createAthenaTable');
 
 const athenaMock = mockClient(AthenaClient);
 const lambdaMock = mockClient(LambdaClient);
+const quicksightMock = mockClient(QuickSightClient);
 
 describe('createAthenaTable Lambda Function', () => {
     beforeEach(() => {
@@ -20,6 +25,7 @@ describe('createAthenaTable Lambda Function', () => {
     });
 
     // Mock environment variables (if needed)
+    process.env.ACCOUNT_ID = '123456789012';
     process.env.REGION = 'us-east-1'; 
     process.env.RESULT_BUCKET = 'your-result-bucket';
     process.env.UPDATE_FUNC_ARN = 'your-update-function-arn';
@@ -31,19 +37,19 @@ describe('createAthenaTable Lambda Function', () => {
         // Mock successful Athena responses
         athenaMock.on(StartQueryExecutionCommand).resolves({ QueryExecutionId: 'test-query-id' });
         athenaMock.on(GetQueryExecutionCommand).resolvesOnce({ 
-            QueryExecution: { Status: { State: 'RUNNING' } } 
-        }).resolves({ 
             QueryExecution: { Status: { State: 'SUCCEEDED' } } 
         });
+        // Mock successful Quicksight responses
+        quicksightMock.on(DescribeDataSetCommand).resolves({ Status: 200 });
+
         // Mock successful Lambda invoke
         lambdaMock.on(InvokeCommand).resolves({ StatusCode: 200 });
 
         const result = await createAthenaTable({});
-        console.log(result);
 
         // Check if specific commands were called
         expect(athenaMock.commandCalls(StartQueryExecutionCommand)).toHaveLength(1); 
-        expect(athenaMock.commandCalls(GetQueryExecutionCommand)).toHaveLength(2); // Called twice in your code
+        expect(athenaMock.commandCalls(GetQueryExecutionCommand)).toHaveLength(1);
         expect(lambdaMock.commandCalls(InvokeCommand)).toHaveLength(1); 
     }, 10000);
 
@@ -95,14 +101,7 @@ describe('createAthenaTable Lambda Function', () => {
     it('should handle Lambda invoke failure', async () => {
         // Mock successful Athena responses
         athenaMock.on(StartQueryExecutionCommand).resolves({ QueryExecutionId: 'test-query-id' });
-        athenaMock.on(GetQueryExecutionCommand).resolvesOnce({
-            QueryExecution: { Status: { State: 'RUNNING' } }
-        }).resolves({
-            QueryExecution: { Status: { State: 'FAILED' } }
-        });
-
-        // Mock Lambda invoke to fail
-        lambdaMock.on(InvokeCommand).rejects(new Error('Simulated Lambda invoke error'));
+        athenaMock.on(GetQueryExecutionCommand).rejects(new Error('Simulated Lambda invoke error'));
 
         // Invoke your Lambda function and expect it to throw an error
         await expect(createAthenaTable({})).rejects.toThrow('Simulated Lambda invoke error');

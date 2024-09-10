@@ -12,8 +12,8 @@ export class QuickSightDataStack extends Stack {
         super(scope, id, props);
 
         // Creating lambda role
-        const lambdaRole = new iam.Role(this, "NuoaLambdaExecutionRole", {
-            assumedBy: new iam.CompositePrincipal( // Use CompositePrincipal to combine principal
+        const lambdaRole = new iam.Role(this, "QuicksightDatasetRole", {
+            assumedBy: new iam.CompositePrincipal( 
               new iam.ServicePrincipal("lambda.amazonaws.com"),
               new iam.ServicePrincipal("quicksight.amazonaws.com")
             ),

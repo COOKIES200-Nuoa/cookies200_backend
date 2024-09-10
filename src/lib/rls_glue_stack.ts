@@ -45,6 +45,5 @@ export class RLSGlueStack extends Stack {
             }
         });
         table.addDependency(database);
-
     }
 }

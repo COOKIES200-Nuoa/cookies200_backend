@@ -1,11 +1,11 @@
 import { App } from 'aws-cdk-lib';
 import { Template, Match } from 'aws-cdk-lib/assertions';
-import { QuickSightDataStack } from '../../src/lib/quicksightData_stack'; // Adjust the path
+import { QuickSightDataStack } from '../../src/lib/quicksightData_stack'; 
 
     test('QuickSightDataStack creates resources with correct properties', () => {
     const app = new App();
 
-    // Set context values (replace with appropriate mock values)
+    // Set context values 
     app.node.setContext('catalogName', 'my-catalog');
     app.node.setContext('databaseName', 'my-database');
     app.node.setContext('latestPartitionTableName', 'my-table');
@@ -23,7 +23,7 @@ import { QuickSightDataStack } from '../../src/lib/quicksightData_stack'; // Adj
     template.hasResourceProperties('AWS::Lambda::Function', {
         Handler: 'createQuicksightDataset.createQuicksightDataset',
         Runtime: 'nodejs18.x',
-        Timeout: 60, // 1 minute
+        Timeout: 60, 
         Environment: {
         Variables: {
             REGION: { Ref: 'AWS::Region' },
@@ -92,18 +92,18 @@ import { QuickSightDataStack } from '../../src/lib/quicksightData_stack'; // Adj
         },
         // Assert that this policy is attached to the Lambda role
         Roles: [
-            { Ref: Match.stringLikeRegexp('NuoaLambdaExecutionRole*') } // Replace with the actual logical ID if it's different
+            { Ref: Match.stringLikeRegexp('QuicksightDatasetRole*') } 
         ]
     });
 
-  // Assert CfnOutput
-  template.hasOutput('QuicksightDatasetFunctionArn', {
+// Assert CfnOutput
+template.hasOutput('QuicksightDatasetFunctionArn', {
     Value: {
-      'Fn::GetAtt': [ Match.stringLikeRegexp('QuicksightDatasourceDatasetFunction*'), 'Arn' ]
+    'Fn::GetAtt': [ Match.stringLikeRegexp('QuicksightDatasourceDatasetFunction*'), 'Arn' ]
     },
     Description: 'Arn of function that creates Quicksight Data Source/Dataset',
     Export: {
-      Name: 'QuicksightDatasetFunctionArn'
+    Name: 'QuicksightDatasetFunctionArn'
     }
-  });
+});
 });

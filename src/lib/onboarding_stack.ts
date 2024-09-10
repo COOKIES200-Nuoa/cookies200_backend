@@ -26,7 +26,7 @@ export class QuickSightOnboardingStack extends Stack {
         const updateRLSTableArn = Fn.importValue('RLSTableFuncARN');
 
     // ========= Creating lambda function =========
-        const lambdaRole = new iam.Role(this, "NuoaLambdaExecutionRole", {
+        const lambdaRole = new iam.Role(this, "OnboardingRole", {
             assumedBy: new iam.CompositePrincipal( // Use CompositePrincipal to combine principals
               new iam.ServicePrincipal("lambda.amazonaws.com"),
               new iam.ServicePrincipal("quicksight.amazonaws.com")

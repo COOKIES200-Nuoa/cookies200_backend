@@ -4,7 +4,7 @@ import {
 } from '@aws-sdk/client-quicksight';
 import { mockClient } from 'aws-sdk-client-mock';
 
-const { updateRLS } = require('../../../src/lambda-code/rowLevelSecurity/updateRLS');
+const { updateRLS } = require('../src/lambda-code/rowLevelSecurity/updateRLS');
 
 const quicksightMock = mockClient(QuickSightClient);
 
@@ -40,7 +40,7 @@ describe('updateQS Lambda Function', () => {
     it('should handle errors during QuickSight update', async () => {
         // Mock QuickSight to throw an error
         quicksightMock.on(CreateIngestionCommand).rejects(new Error('Simulated QuickSight error'));
-        // Invoke your Lambda function and expect it to log the error (no return value in your current code)
+        // Invoke your Lambda function and expect it to log the error 
         await expect(updateRLS({})).rejects.toThrow('Simulated QuickSight error') ;
     });
 });

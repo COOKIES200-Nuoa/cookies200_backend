@@ -19,10 +19,10 @@ const mockQuickSightClient = mockClient(QuickSightClient);
 const mockAthenaClient = mockClient(AthenaClient);
 
 // Mock your createQuickSightResource helper
-const { createResource } = require('../../../src/lambda-code/dtbpipeline/createQuicksightDataset/helper/createResource'); 
+const { createResource } = require('../src/lambda-code/dtbpipeline/createQuicksightDataset/helper/createResource'); 
 
 // Import the function to be tested
-const { createQuicksightDataset } = require('../../../src/lambda-code/dtbpipeline/createQuicksightDataset/createQuicksightDataset'); 
+const { createQuicksightDataset } = require('../src/lambda-code/dtbpipeline/createQuicksightDataset/createQuicksightDataset'); 
 
 // ... other imports
 

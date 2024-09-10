@@ -20,7 +20,7 @@ test('RLSGlueStack creates Glue database and table with correct names and proper
     },
     DatabaseInput: {
         LocationUri: 'dynamo-db-flag',
-        Name: mockTableName.toLowerCase() // Ensure lowercase conversion
+        Name: mockTableName.toLowerCase() 
     }
     });
 
@@ -30,7 +30,7 @@ test('RLSGlueStack creates Glue database and table with correct names and proper
         Ref: 'AWS::AccountId'
     },
     DatabaseName: {
-        Ref: 'rlsgluedatabase' // Reference to the database
+        Ref: 'rlsgluedatabase' 
     },
     TableInput: {
         Name: mockTableName.toLowerCase(),

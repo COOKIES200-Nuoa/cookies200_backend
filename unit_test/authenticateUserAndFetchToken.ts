@@ -5,7 +5,7 @@ import {
   RespondToAuthChallengeCommand
 } from '@aws-sdk/client-cognito-identity-provider';
 
-const { authenticateUserAndFetchToken } = require('../../src/lambda-code/Login/authenticateUserAndFetchToken');
+const { authenticateUserAndFetchToken } = require('../src/lambda-code/Login/authenticateUserAndFetchToken');
 
 describe('authenticateUserAndFetchToken', () => {
   const cognitoMock = mockClient(CognitoIdentityProviderClient);

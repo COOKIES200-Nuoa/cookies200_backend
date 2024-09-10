@@ -37,7 +37,7 @@ describe('AthenaQSStack', () => {
                         Action: 'sts:AssumeRole',
                         Effect: 'Allow',
                         Principal: { Service: 'lambda.amazonaws.com'  
- }
+                        }
                     }
                 ]
             },
@@ -65,8 +65,25 @@ describe('AthenaQSStack', () => {
                             "s3:ListBucket"
                         ],
                         Resource: [
-                            Match.stringLikeRegexp("arn:aws:s3:::*"),
-                            Match.stringLikeRegexp("arn:aws:s3:::*"),
+                            {
+                                'Fn::Join': [
+                                    "",
+                                    [
+                                        "arn:aws:s3:::",
+                                        {"Fn::ImportValue": "OutputBucket"}, 
+                                    ]
+                                ]
+                            },
+                            {
+                                'Fn::Join': [
+                                    "",
+                                    [
+                                        "arn:aws:s3:::",
+                                        {"Fn::ImportValue": "OutputBucket"}, 
+                                        "*"
+                                    ]
+                                ]
+                            },
                         ],
                         Effect: "Allow",
                         Sid: "DatalakeQueryPermissions"

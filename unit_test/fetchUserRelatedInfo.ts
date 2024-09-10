@@ -5,7 +5,7 @@ const {
   getCognitoUserGroups,
   getUserRole,
   generateQuickSightURL
-} = require('../../src/lambda-code/QSaccess/fetchUserRelatedInfo');
+} = require('../src/lambda-code/QSaccess/fetchUserRelatedInfo');
 
 // Mock the QuickSightClient
 const quicksightMock = mockClient(QuickSightClient);
