@@ -36,6 +36,7 @@ describe("Logout Handler", () => {
     };
 
     const response = await handler(event);
+    console.log("Response from handler:", response);
 
     expect(response.statusCode).toBe(200);
     expect(JSON.parse(response.body).message).toBe("Logout successful");

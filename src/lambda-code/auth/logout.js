@@ -10,8 +10,7 @@ exports.handler = async (event) => {
       statusCode: 400,
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Headers":
-          "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+        "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
         "Access-Control-Allow-Methods": "*",
         "Access-Control-Allow-Origin": "*",
       },
@@ -21,6 +20,7 @@ exports.handler = async (event) => {
 
   try {
     // Perform global sign-out to invalidate the tokens
+    const input = { AccessToken: accessToken }; // Define the input object
     const command = new GlobalSignOutCommand(input);
     const response = await client.send(command);
 
@@ -28,8 +28,7 @@ exports.handler = async (event) => {
       statusCode: 200,
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Headers":
-          "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+        "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
         "Access-Control-Allow-Methods": "*",
         "Access-Control-Allow-Origin": "*",
       },
@@ -44,8 +43,7 @@ exports.handler = async (event) => {
       statusCode: 500,
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Headers":
-          "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+        "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
         "Access-Control-Allow-Methods": "*",
         "Access-Control-Allow-Origin": "*",
       },
